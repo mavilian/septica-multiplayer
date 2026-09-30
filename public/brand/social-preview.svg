@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+<title id="title">Șeptică Multiplayer social preview</title><desc id="desc">Preview card pentru promovarea Șeptică Multiplayer.</desc>
+<defs><radialGradient id="g" cx="50%" cy="38%" r="80%"><stop offset="0%" stop-color="#1d5734"/><stop offset="100%" stop-color="#08160d"/></radialGradient></defs>
+<rect width="1200" height="630" fill="url(#g)"/>
+<rect x="34" y="34" width="1132" height="562" rx="38" fill="none" stroke="#d7b45c" stroke-width="4" opacity=".55"/>
+<g transform="translate(130 116) rotate(-8 100 150)">
+<rect width="200" height="300" rx="24" fill="#f7f2e5" stroke="#1c3021" stroke-width="10"/>
+<text x="28" y="72" font-family="Arial,sans-serif" font-size="50" font-weight="800" fill="#8a1d20">7</text><text x="28" y="124" font-family="Arial,sans-serif" font-size="36" fill="#8a1d20">♥</text><text x="100" y="220" text-anchor="middle" font-family="Georgia,serif" font-size="78" font-weight="700" fill="#17351f">Ș</text>
+</g>
+<text x="405" y="255" font-family="Georgia,serif" font-size="92" font-weight="700" fill="#f7f2e5">Șeptică</text>
+<text x="410" y="310" font-family="Arial,sans-serif" font-size="28" font-weight="800" letter-spacing="8" fill="#d7b45c">MULTIPLAYER 1V1</text>
+<text x="410" y="380" font-family="Arial,sans-serif" font-size="30" fill="#b5c3b9">Intră la masă. Joacă. Câștigă.</text>
+</svg>
