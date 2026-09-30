@@ -516,7 +516,7 @@ body{
 </style>
 </head>
 <body>
-<div id="connection" class="connection hidden"></div>
+<div id="connection" class="connection hidden"></div><span id="me" hidden></span>
 <div id="fxLayer" class="fx-layer" aria-live="polite"></div><div id="demoBadge" class="demo-mode-badge hidden">PREVIEW UI <button id="demoStep" class="demo-step" type="button">următorul pas</button></div>
 
 <section id="lobby" class="frame lobby-frame">
@@ -664,6 +664,9 @@ function show(){ $("lobby").classList.add("hidden"); $("game").classList.remove(
 function setConnection(text,visible){ $("connection").textContent=text; $("connection").classList.toggle("hidden",!visible); }
 function lobbyReady(){ $("lobbyState").textContent="Alege: creează o cameră sau introdu codul adversarului."; }
 function joinRoom(){ $("roomCode").value=$("roomCode").value.toUpperCase().trim(); socket.emit("join_room",$("roomCode").value); }
+function suitClass(suit){
+  return ["hearts","diamonds"].includes(String(suit))?"red":"black";
+}
 function visualSuit(card,index,items=[]){
   const raw=typeof card==="object"&&card?String(card.suit||""):"";
   if(raw){const map={"S":"spades","SPADES":"spades","♠":"spades","H":"hearts","HEARTS":"hearts","♥":"hearts","D":"diamonds","DIAMONDS":"diamonds","♦":"diamonds","C":"clubs","CLUBS":"clubs","♣":"clubs"};return map[raw.toUpperCase()]||raw}
