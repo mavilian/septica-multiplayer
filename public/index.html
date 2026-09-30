@@ -152,7 +152,7 @@ $("create").onclick=()=>socket.emit("create_room");
 $("join").onclick=joinRoom;
 $("joinSecondary").onclick=joinRoom;
 $("roomCode").addEventListener("keydown",e=>{if(e.key==="Enter")joinRoom()});
-socket.on("connect",()=>{setConnection("",false);lobbyReady()});\nsocket.on("disconnect",()=>{setConnection("Conexiunea a fost pierdută. Reîncercăm…",true);if(document.body.contains($("status"))) $("status").textContent="Reconectare la server…"});\nsocket.on("connect_error",()=>setConnection("Nu ne putem conecta la server.",true));\nsocket.on("room_created",d=>{me=d.player;show();$("code").textContent=d.code;$("me").textContent="A";$("lobbyState").textContent="Așteaptă adversarul…"});
+socket.on("connect",()=>{setConnection("",false);lobbyReady()});\nsocket.on("disconnect",()=>{setConnection("Conexiunea a fost pierdută. Reîncercăm…",true);if(document.body.contains($("status"))) $("status").textContent="Reconectare la server…"});\nwindow.addEventListener("offline",()=>setConnection("Ești offline. Verificăm conexiunea…",true));\nwindow.addEventListener("online",()=>{if(socket.connected)setConnection("",false);else setConnection("Conexiunea revine…",true)});\nsocket.on("connect_error",()=>setConnection("Nu ne putem conecta la server.",true));\nsocket.on("room_created",d=>{me=d.player;show();$("code").textContent=d.code;$("me").textContent="A";$("lobbyState").textContent="Așteaptă adversarul…"});
 socket.on("room_joined",d=>{me=d.player;show();$("code").textContent=d.code;$("me").textContent="B";$("lobbyState").textContent="Ai intrat la masă."});
 socket.on("error_message",m=>$("message").textContent=m);
 socket.on("opponent_disconnected",()=>{$("status").textContent="Adversarul s-a deconectat. Așteaptă reconectarea.";});
