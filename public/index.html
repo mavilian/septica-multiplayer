@@ -800,7 +800,7 @@ $("roomCode").addEventListener("keydown",e=>{if(e.key==="Enter")joinRoom()});
 $("copyRoom").onclick=async()=>{const code=$("code").textContent;try{await navigator.clipboard.writeText(code);$("copyRoom").textContent="copiat";setTimeout(()=>$("copyRoom").textContent="copiază",1200)}catch{$("copyRoom").textContent="selectează";setTimeout(()=>$("copyRoom").textContent="copiază",1200)}};$("shareRoom").onclick=async()=>{primeAudio();const code=$("code").textContent;const share={title:"Șeptică Multiplayer",text:"Intră la masa mea de Șeptică. Cod: "+code,url:window.location.href};try{if(navigator.share){await navigator.share(share);toast("Invitația este gata","gold")}else{await navigator.clipboard.writeText(share.text+" "+share.url);toast("Invitația a fost copiată","gold")}}catch(e){if(e&&e.name!=="AbortError")toast("Nu am putut distribui invitația")}};
 $("resultClose").onclick=()=>$("resultOverlay").classList.add("hidden");
 $("resultNext").onclick=()=>socket.emit("next_round");
-$("take").onclick=()=>{primeAudio();sound("take");socket.emit("take")};$("next").onclick=()=>{primeAudio();socket.emit("next_round")};
+$("take").onclick=()=>{primeAudio();if(demoMode){sound("take");advanceDemo();return}sound("take");socket.emit("take")};$("next").onclick=()=>{primeAudio();if(demoMode){advanceDemo();return}socket.emit("next_round")};
 socket.on("connect",()=>{setConnection("",false);lobbyReady()});
 socket.on("disconnect",()=>{setConnection("Conexiunea a fost pierdută. Reîncercăm…",true);if(document.body.contains($("status"))) $("status").textContent="Reconectare la server…"});
 socket.on("connect_error",()=>setConnection("Nu ne putem conecta la server.",true));
