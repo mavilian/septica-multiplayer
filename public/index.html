@@ -92,7 +92,7 @@ button{border:0}
         <div class="brand-lockup"><div class="brand-mark">Ș</div><div class="brand">Șeptică</div></div>
         <div class="top-meta">
           <span class="chip"><span>Masă</span><span class="room-copy"><b id="code"></b><button class="copy-room" id="copyRoom" type="button">copiază</button></span></span>
-          <span class="chip"><span>Runda</span><b id="round"></b></span>
+          <span class="chip"><span>Runda</span><b id="round"></b></span><span class="chip"><span>Partidă</span><b id="gameScore">A 0 – 0 B</b></span>
           <span class="chip deck-chip"><span>Pachet</span><b id="deck"></b></span>
         </div>
       </div>
@@ -114,7 +114,7 @@ button{border:0}
           <div class="table-label">masa de joc</div>
           <div class="sequence-wrap"><div id="sequence" class="sequence"><span class="empty">Nicio secvență activă</span></div></div>
           <div class="action-row">
-            <div id="status" class="status">Așteaptă adversarul.</div>
+            <div id="status" class="status" aria-live="polite">Așteaptă adversarul.</div>
             <div id="statusSub" class="status-sub"></div>
             <div class="actions"><button id="take" class="primary" disabled>Ia-le</button><button id="next" class="secondary hidden">Rundă nouă</button></div>
           </div>
@@ -168,7 +168,7 @@ function renderResult(s){
 function renderState(s){
   lastState=s;show();
   $("code").textContent=s.room;$("me").textContent=s.player?"B":"A";$("round").textContent=s.round;
-  $("deck").textContent=s.deck;$("smallA").textContent=s.small[0];$("smallB").textContent=s.small[1];
+  $("deck").textContent=s.deck;$("smallA").textContent=s.small[0];$("smallB").textContent=s.small[1];$("gameScore").textContent="A "+s.big[0]+" – "+s.big[1]+" B";
   $("oppCount").textContent=s.opponentCount;
   $("opp").innerHTML=Array.from({length:s.opponentCount},()=>'<div class="card back" aria-hidden="true">?</div>').join("");
   const ownTurn=s.status==="playing"&&s.turn===s.player;
