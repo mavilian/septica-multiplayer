@@ -1,23 +1,30 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 700">
 <defs>
-  <pattern id="p" width="28" height="28" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-    <rect width="28" height="28" fill="#173b27"/>
-    <path d="M0 14H28M14 0V28" stroke="#d8b65d" stroke-width="1" opacity=".12"/>
-    <rect x="4" y="4" width="20" height="20" fill="none" stroke="#d8b65d" stroke-width="1" opacity=".10"/>
+  <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#193d29"/><stop offset=".5" stop-color="#0f2d1e"/><stop offset="1" stop-color="#092117"/></linearGradient>
+  <linearGradient id="brass" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f2d98d"/><stop offset=".45" stop-color="#a97c2c"/><stop offset="1" stop-color="#f4e0a2"/></linearGradient>
+  <pattern id="weave" width="18" height="18" patternUnits="userSpaceOnUse">
+    <path d="M0 9h18M9 0v18" stroke="#f2db9a" stroke-width=".55" opacity=".10"/>
+    <path d="M2 2l14 14M16 2L2 16" stroke="#07170f" stroke-width=".6" opacity=".20"/>
+    <circle cx="9" cy="9" r="2.2" fill="none" stroke="#f2db9a" stroke-width=".55" opacity=".10"/>
   </pattern>
-  <linearGradient id="edge" x1="0" x2="1" y1="0" y2="1">
-    <stop stop-color="#f2dc91"/><stop offset=".5" stop-color="#b48732"/><stop offset="1" stop-color="#f2dc91"/>
-  </linearGradient>
-  <radialGradient id="med" cx="50%" cy="45%" r="60%">
-    <stop stop-color="#2b6340"/><stop offset="1" stop-color="#0c2b1a"/>
-  </radialGradient>
+  <radialGradient id="seal" cx="50%" cy="45%" r="58%"><stop stop-color="#285b3d"/><stop offset="1" stop-color="#0a2417"/></radialGradient>
 </defs>
-<rect x="10" y="10" width="480" height="680" rx="30" fill="#0c2618" stroke="url(#edge)" stroke-width="10"/>
-<rect x="28" y="28" width="444" height="644" rx="22" fill="url(#p)" stroke="#d8b65d" stroke-width="2" opacity=".96"/>
-<rect x="45" y="45" width="410" height="610" rx="16" fill="none" stroke="#d8b65d" stroke-width="2" opacity=".34"/>
-<circle cx="250" cy="350" r="112" fill="url(#med)" stroke="#d8b65d" stroke-width="3" opacity=".98"/>
-<circle cx="250" cy="350" r="94" fill="none" stroke="#f0d890" stroke-width="1.5" opacity=".35"/>
-<path d="M250 255c-24 31-51 56-51 83 0 28 22 51 51 51s51-23 51-51c0-27-27-52-51-83Z" fill="none" stroke="#f0d890" stroke-width="8" opacity=".92"/>
-<text x="250" y="401" text-anchor="middle" font-family="Georgia, serif" font-weight="700" font-size="82" fill="#f0d890">Ș</text>
-<text x="250" y="482" text-anchor="middle" font-family="Arial, sans-serif" font-size="17" font-weight="700" letter-spacing="7" fill="#e8cf80" opacity=".88">ȘEPTICĂ</text>
+<rect x="8" y="8" width="484" height="684" rx="28" fill="#07160f" stroke="#b98d3d" stroke-width="10"/>
+<rect x="23" y="23" width="454" height="654" rx="20" fill="url(#paper)" stroke="url(#brass)" stroke-width="2"/>
+<rect x="34" y="34" width="432" height="632" rx="16" fill="url(#weave)" stroke="#e2c36f" stroke-width="1.2" opacity=".92"/>
+<rect x="50" y="50" width="400" height="600" rx="14" fill="none" stroke="#f1da93" stroke-width="1.5" opacity=".48"/>
+<rect x="63" y="63" width="374" height="574" rx="12" fill="none" stroke="#9d7329" stroke-width="1" opacity=".72"/>
+<g transform="translate(250 350)">
+  <circle r="128" fill="url(#seal)" stroke="url(#brass)" stroke-width="3"/>
+  <circle r="112" fill="none" stroke="#f2dc96" stroke-width="1.2" opacity=".42"/>
+  <circle r="98" fill="none" stroke="#a8792e" stroke-width="1.1" stroke-dasharray="2 7" opacity=".72"/>
+  <path d="M0-72C-14-54-42-30-42-4c0 30 19 55 42 55s42-25 42-55C42-30 14-54 0-72Z" fill="none" stroke="#f0d58c" stroke-width="5.4" opacity=".88"/>
+  <path d="M0-29c-27-2-47 10-61 26M0-29c27-2 47 10 61 26M0-6c-18 6-30 18-34 36M0-6c18 6 30 18 34 36" fill="none" stroke="#d4ad57" stroke-width="2" opacity=".82"/>
+  <path d="M0-84v168M-84 0h168" stroke="#f0d58c" stroke-width=".8" opacity=".25"/>
+  <circle r="19" fill="none" stroke="#f3dda0" stroke-width="2" opacity=".82"/>
+  <circle r="8" fill="#d0a94f" opacity=".86"/>
+</g>
+<g fill="#f0d58c" opacity=".7">
+  <circle cx="82" cy="82" r="3"/><circle cx="418" cy="82" r="3"/><circle cx="82" cy="618" r="3"/><circle cx="418" cy="618" r="3"/>
+</g>
 </svg>
