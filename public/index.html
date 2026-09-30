@@ -462,11 +462,59 @@ body{
   .card.deal-in,.opponent-hand .card.deal-in,.seq.fresh,.score-card.score-change,.pile-display.collect-hit,.fx-toast,.value-pop{animation:none!important}
 }
 
+
+.demo-launch{
+  margin:18px auto 0;
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  padding:7px 10px;
+  border-radius:999px;
+  background:rgba(3,16,9,.34);
+  border:1px solid rgba(241,218,148,.12);
+  color:#889a91;
+  font-size:10px;
+  font-weight:800;
+  cursor:pointer;
+  transition:transform .16s ease,border-color .16s ease,color .16s ease;
+}
+.demo-launch:hover{transform:translateY(-1px);border-color:rgba(241,218,148,.26);color:#d9c48a}
+.demo-mode-badge{
+  position:fixed;
+  left:50%;
+  bottom:14px;
+  transform:translateX(-50%);
+  z-index:40;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:7px 10px;
+  border-radius:999px;
+  background:rgba(7,22,13,.90);
+  border:1px solid rgba(241,218,148,.18);
+  color:#d4c18a;
+  box-shadow:0 12px 32px rgba(0,0,0,.24);
+  font-size:10px;
+  font-weight:850;
+  backdrop-filter:blur(8px);
+}
+.demo-step{
+  border:0;
+  border-radius:999px;
+  padding:5px 8px;
+  background:rgba(241,218,148,.10);
+  color:#f0dc9b;
+  font-size:9px;
+  font-weight:900;
+  cursor:pointer;
+}
+@media(max-width:720px){.demo-mode-badge{bottom:max(8px,env(safe-area-inset-bottom));font-size:9px}}
+
 </style>
 </head>
 <body>
 <div id="connection" class="connection hidden"></div>
-<div id="fxLayer" class="fx-layer" aria-live="polite"></div>
+<div id="fxLayer" class="fx-layer" aria-live="polite"></div><div id="demoBadge" class="demo-mode-badge hidden">PREVIEW UI <button id="demoStep" class="demo-step" type="button">următorul pas</button></div>
 
 <section id="lobby" class="frame lobby-frame">
   <div class="table lobby-frame">
@@ -483,7 +531,7 @@ body{
         <input id="roomCode" maxlength="5" placeholder="COD MASĂ" aria-label="Cod masă" autocomplete="off">
         <button class="secondary" id="joinSecondary">Intră</button>
       </div>
-      <p id="message" class="message"></p>
+      <p id="message" class="message"></p><button id="demoLaunch" class="demo-launch" type="button">Previzualizare UI · solo</button>
       <div id="lobbyState" class="lobby-state">Conectare la server…</div>
     </div>
   </div>
@@ -566,13 +614,41 @@ body{
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const socket=io(),$=id=>document.getElementById(id);let me=0,lastState=null,audioCtx=null;
+const socket=io(),$=id=>document.getElementById(id);let me=0,lastState=null,audioCtx=null;const demoMode=new URLSearchParams(location.search).get("demo")==="1";let demoStep=0;
 function audio(){if(audioCtx)return audioCtx;try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();}catch{return null}return audioCtx}
 function tone(freq,duration=.07,type="sine",gain=.035,offset=0){const ctx=audio();if(!ctx)return;try{const now=ctx.currentTime+offset,o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.setValueAtTime(freq,now);g.gain.setValueAtTime(.0001,now);g.gain.exponentialRampToValueAtTime(gain,now+.008);g.gain.exponentialRampToValueAtTime(.0001,now+duration);o.connect(g);g.connect(ctx.destination);o.start(now);o.stop(now+duration+.02)}catch{}}
 function sound(kind){if(kind==="turn"){tone(660,.08,"sine",.03);tone(880,.11,"sine",.025,.07)}else if(kind==="card"){tone(390,.045,"triangle",.022)}else if(kind==="take"){tone(240,.08,"square",.024);tone(180,.10,"square",.018,.07)}else if(kind==="finish"){tone(523,.11,"sine",.03);tone(659,.12,"sine",.026,.09);tone(784,.16,"sine",.022,.19)}}
 function toast(text,kind=""){const n=document.createElement("div");n.className="fx-toast"+(kind?" "+kind:"");n.textContent=text;$("fxLayer").appendChild(n);setTimeout(()=>n.remove(),900)}
 function primeAudio(){const ctx=audio();if(ctx&&ctx.state==="suspended")ctx.resume().catch(()=>{})}
 document.addEventListener("pointerdown",primeAudio,{once:true});
+
+const demoBase={
+  room:"DEMO1",player:0,players:[true,true],status:"playing",round:3,game:1,
+  small:[1,0],big:[0,0],roundDouble:false,roundResult:null,gameResult:null,deck:18,
+  hand:["10","7","K","A"],opponentCount:4,sequence:[],turn:0,
+  pileCounts:[3,4],pilePoints:[1,2],log:["Previzualizare UI locală.","Nu este conectat la o partidă reală."]
+};
+function demoState(step){
+  const s=structuredClone(demoBase);
+  if(step>=1){s.sequence=["10"];s.hand=["7","K","A"];s.turn=0;s.deck=17}
+  if(step>=2){s.sequence=["10","10"];s.hand=["7","K","A"];s.turn=0;s.deck=16}
+  if(step>=3){s.sequence=["10","10","7"];s.hand=["K","A"];s.turn=0;s.deck=15}
+  if(step>=4){s.sequence=[];s.hand=["K","A","9","Q"];s.pileCounts=[3,7];s.pilePoints=[1,4];s.deck=15;s.turn=0}
+  if(step>=5){s.sequence=["Q"];s.hand=["K","A","9"];s.turn=0;s.deck=14}
+  return s;
+}
+function renderDemo(){
+  $("demoBadge").classList.remove("hidden");
+  show();
+  renderState(demoState(demoStep));
+}
+function advanceDemo(){
+  primeAudio();
+  demoStep=demoStep>=5?0:demoStep+1;
+  if(demoStep===4){sound("take");toast("Secvență colectată","gold")}
+  renderDemo();
+}
+
 function show(){ $("lobby").classList.add("hidden"); $("game").classList.remove("hidden"); }
 function setConnection(text,visible){ $("connection").textContent=text; $("connection").classList.toggle("hidden",!visible); }
 function lobbyReady(){ $("lobbyState").textContent="Alege: creează o cameră sau introdu codul adversarului."; }
@@ -680,7 +756,7 @@ function renderState(s){
     x.addEventListener("pointerdown",()=>x.classList.add("pressing"),{passive:true});
     x.addEventListener("pointerup",()=>x.classList.remove("pressing"),{passive:true});
     x.addEventListener("pointercancel",()=>x.classList.remove("pressing"),{passive:true});
-    x.onclick=()=>ownTurn&&(primeAudio(),socket.emit("play_card",x.dataset.c));
+    x.onclick=()=>ownTurn&&(primeAudio(),demoMode?advanceDemo():socket.emit("play_card",x.dataset.c));
     x.onkeydown=e=>{if(ownTurn&&(e.key==="Enter"||e.key===" ")){e.preventDefault();primeAudio();socket.emit("play_card",x.dataset.c)}};
   });
 
@@ -715,6 +791,9 @@ function renderState(s){
   renderResult(s);
 }
 
+$("demoLaunch").onclick=()=>{location.search="?demo=1"};
+$("demoStep").onclick=()=>{advanceDemo()};
+if(demoMode){setTimeout(()=>{renderDemo();},0);}
 $("create").onclick=()=>socket.emit("create_room");
 $("join").onclick=joinRoom;$("joinSecondary").onclick=joinRoom;
 $("roomCode").addEventListener("keydown",e=>{if(e.key==="Enter")joinRoom()});
