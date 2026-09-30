@@ -44,7 +44,11 @@ button{border:0}
 .opponent-panel,.self-panel{display:flex;justify-content:center}.player-card{display:flex;align-items:center;gap:10px;width:min(340px,88%);padding:8px 12px;border:1px solid var(--line);border-radius:15px;background:rgba(5,24,13,.34);transition:box-shadow .2s ease,border-color .2s ease}.player-card.active{border-color:rgba(241,218,148,.38);box-shadow:0 0 0 4px rgba(241,218,148,.05),0 12px 30px rgba(0,0,0,.18)}.avatar{width:34px;height:34px;flex:0 0 34px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#775631,#2d190b);border:1px solid rgba(241,218,148,.34);color:var(--gold-hi);font-weight:950}.player-copy{min-width:0}.player-kicker{text-transform:uppercase;letter-spacing:.13em;color:#8ea397;font-size:9px}.player-value{font-size:13px;font-weight:800;margin-top:1px}.turn-dot{margin-left:auto;width:9px;height:9px;border-radius:50%;background:#637268;box-shadow:0 0 0 4px rgba(99,114,104,.10)}.turn-dot.active{background:#ead07a;box-shadow:0 0 0 4px rgba(234,208,122,.11),0 0 15px rgba(234,208,122,.40)}
 .center-stage{display:grid;align-content:center;gap:16px;position:relative}.table-label{display:flex;justify-content:center;align-items:center;gap:8px;color:#7f9488;text-transform:uppercase;letter-spacing:.18em;font-size:9px}.table-label:before,.table-label:after{content:"";width:min(130px,16vw);height:1px;background:linear-gradient(90deg,transparent,rgba(241,218,148,.16))}
 .opponent-hand{display:flex;justify-content:center;min-height:55px}.cards{display:flex;justify-content:center;gap:clamp(5px,1vw,9px);flex-wrap:wrap}.card{position:relative;width:clamp(54px,6.3vw,72px);aspect-ratio:.69;border-radius:11px;border:1px solid rgba(0,0,0,.20);background:linear-gradient(145deg,#fffdf8,#ebe5d7);color:var(--ink);box-shadow:0 10px 20px rgba(0,0,0,.22),inset 0 0 0 1px rgba(255,255,255,.62);display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;transition:transform .18s var(--ease),box-shadow .18s var(--ease),filter .18s ease,opacity .18s ease}.card:before{content:"";position:absolute;inset:5px;border:1px solid rgba(41,30,19,.10);border-radius:8px}.card:hover:not(.disabled){transform:translateY(-9px) rotate(-1deg);box-shadow:0 18px 27px rgba(0,0,0,.28),inset 0 0 0 1px rgba(255,255,255,.62)}.card:focus-visible{outline:3px solid var(--gold-hi);outline-offset:4px}.card.disabled{opacity:.30;cursor:default;filter:saturate(.7)}.card.active-card{transform:translateY(-8px);box-shadow:0 0 0 3px rgba(231,204,111,.17),0 19px 30px rgba(0,0,0,.30)}.card-rank{position:absolute;top:9px;left:10px;font-weight:950;font-size:13px;line-height:1}.card-rank.bottom{top:auto;left:auto;right:10px;bottom:9px;transform:rotate(180deg)}.card-seal{font-family:Georgia,serif;font-weight:700;font-size:37px;color:#1e3828;opacity:.92}.card-seal:after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:52px;height:52px;border:1px solid rgba(30,56,40,.10);border-radius:50%}
-.back{background:linear-gradient(145deg,#29583a,#14351f)!important;color:var(--gold-hi);border-color:rgba(241,218,148,.28);box-shadow:0 9px 17px rgba(0,0,0,.25),inset 0 0 0 1px rgba(255,255,255,.06)}.back:before{inset:6px;border:1px solid rgba(241,218,148,.20);background:repeating-linear-gradient(45deg,transparent 0 7px,rgba(241,218,148,.06) 7px 9px)}
+.score-official{margin-top:5px;color:#65796d;font-size:9px;letter-spacing:.02em}
+.card-face{position:relative;z-index:1;width:100%;height:100%;display:grid;place-items:center}.corner{position:absolute;z-index:3;display:flex;flex-direction:column;align-items:center;line-height:.9;font-family:Georgia,serif;font-weight:900;pointer-events:none}.corner.top{top:8px;left:8px}.corner.bottom{right:8px;bottom:8px;transform:rotate(180deg)}.corner-rank{font-size:14px}.corner-suit{font-size:11px;margin-top:1px}.center-rank{font-family:Georgia,serif;font-size:clamp(38px,5.3vw,58px);font-weight:700;line-height:1}.center-suit{font-family:Georgia,serif;font-size:clamp(25px,3.6vw,39px);line-height:1;margin-top:-1px}.pip-grid{width:76%;height:68%;display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(4,1fr);align-items:center;justify-items:center;position:relative;z-index:1}.pip{font-family:Georgia,serif;font-size:clamp(14px,2vw,21px);line-height:1}.court-card{width:72%;height:68%;position:relative;z-index:1;display:grid;place-items:center;border:1px solid currentColor;border-radius:5px;background:linear-gradient(180deg,rgba(255,255,255,.24),rgba(80,50,25,.04))}.court-card:before,.court-card:after{content:"";position:absolute;left:8%;right:8%;height:1px;background:currentColor;opacity:.20}.court-card:before{top:17%}.court-card:after{bottom:17%}.court-rank{font-family:Georgia,serif;font-size:clamp(34px,4.5vw,48px);font-weight:700}.court-suit{position:absolute;bottom:16%;font-family:Georgia,serif;font-size:15px;opacity:.56}.red{color:var(--red)}.black{color:var(--black)}
+.card.fresh{animation:cardFresh .34s var(--ease) both}.seq.collecting{animation:seqCollect 1.25s var(--ease) both}.seq.collecting:nth-child(1){animation-delay:.05s}.seq.collecting:nth-child(3){animation-delay:.12s}.seq.collecting:nth-child(5){animation-delay:.19s}.seq.collecting:nth-child(7){animation-delay:.26s}.seq.collecting:nth-child(9){animation-delay:.33s}.collection-label{position:absolute;top:7px;left:50%;transform:translateX(-50%);font-size:9px;text-transform:uppercase;letter-spacing:.16em;color:#8a9d91;white-space:nowrap}
+@keyframes cardFresh{from{opacity:0;transform:translateY(14px) scale(.93) rotate(-2deg)}to{opacity:1;transform:none}}@keyframes seqCollect{0%{opacity:1;transform:translate(0,0) scale(1)}62%{opacity:.94;transform:translate(var(--collect-x),22px) rotate(7deg) scale(.82)}100%{opacity:0;transform:translate(var(--collect-x),32px) rotate(10deg) scale(.72)}}
+.back-medallion{position:relative;z-index:1;width:28px;height:38px;border-radius:50%;display:grid;place-items:center;border:1px solid rgba(241,218,148,.34);font-family:Georgia,serif;font-size:17px;background:rgba(7,24,13,.22)}.back{background:linear-gradient(145deg,#29583a,#14351f)!important;color:var(--gold-hi);border-color:rgba(241,218,148,.28);box-shadow:0 9px 17px rgba(0,0,0,.25),inset 0 0 0 1px rgba(255,255,255,.06)}.back:before{inset:6px;border:1px solid rgba(241,218,148,.20);background:repeating-linear-gradient(45deg,transparent 0 7px,rgba(241,218,148,.06) 7px 9px)}
 .sequence-wrap{display:flex;justify-content:center}.sequence{min-height:112px;min-width:min(590px,92%);padding:18px 20px;display:flex;align-items:center;justify-content:center;gap:8px;border-radius:20px;background:linear-gradient(180deg,rgba(3,16,9,.27),rgba(3,16,9,.13));border:1px dashed rgba(241,218,148,.14);position:relative}.sequence:before{content:"";position:absolute;inset:7px;border-radius:14px;border:1px solid rgba(255,255,255,.025);pointer-events:none}.seq{width:54px;height:75px;border-radius:9px;display:grid;place-items:center;background:linear-gradient(145deg,#fffdf8,#ebe5d7);color:var(--ink);font-size:20px;font-weight:950;box-shadow:0 7px 13px rgba(0,0,0,.20);animation:cardIn .35s var(--ease) both}.seq-arrow{color:var(--gold);font-size:13px}.empty{font-size:12px;color:#718579}
 .action-row{display:flex;align-items:center;flex-direction:column;gap:9px}.status{min-height:20px;text-align:center;color:var(--paper);font-size:14px;font-weight:850}.status-sub{color:#8ea397;font-size:11px}.actions{display:flex;gap:9px;justify-content:center;flex-wrap:wrap}.primary,.secondary{min-height:46px;padding:11px 20px;border-radius:13px;font-weight:900;cursor:pointer;transition:transform .16s var(--ease),filter .16s ease,opacity .16s ease}.primary{background:linear-gradient(180deg,#e6ca76,#ba9240);color:#201507;box-shadow:0 10px 20px rgba(0,0,0,.24)}.secondary{background:rgba(5,24,13,.50);color:var(--paper);border:1px solid var(--line)}.primary:hover:not(:disabled),.secondary:hover:not(:disabled){transform:translateY(-2px);filter:brightness(1.06)}button:disabled{opacity:.38;cursor:default;transform:none!important}
 .hand-zone{padding-top:11px;border-top:1px solid rgba(241,218,148,.09)}.hand-label{text-align:center;text-transform:uppercase;letter-spacing:.16em;color:#8ea397;font-size:9px;margin-bottom:7px}.my-hand{padding:3px 3px 10px}.my-hand .card{width:clamp(58px,7.4vw,78px)}.my-hand .card:nth-child(1){transform:rotate(-4deg)}.my-hand .card:nth-child(2){transform:rotate(-1.7deg)}.my-hand .card:nth-child(3){transform:rotate(1.7deg)}.my-hand .card:nth-child(4){transform:rotate(4deg)}.my-hand .card:hover:not(.disabled){transform:translateY(-10px) rotate(0)}
@@ -55,7 +59,7 @@ button{border:0}
 .result-overlay{position:absolute;inset:0;z-index:10;display:grid;place-items:center;padding:20px;background:rgba(1,10,5,.46);backdrop-filter:blur(3px)}.result-card{width:min(430px,92%);padding:26px;border-radius:22px;border:1px solid rgba(241,218,148,.25);background:linear-gradient(180deg,rgba(14,47,26,.98),rgba(5,23,13,.99));box-shadow:0 30px 80px rgba(0,0,0,.40);text-align:center;animation:popIn .4s var(--ease) both}.result-kicker{text-transform:uppercase;letter-spacing:.20em;font-size:10px;color:var(--gold-hi);font-weight:900}.result-title{font-family:Georgia,serif;font-size:34px;margin:8px 0}.result-score{font-size:40px;font-weight:950;font-variant-numeric:tabular-nums}.result-note{color:var(--muted);font-size:13px;margin:5px 0 20px}.result-card .actions{margin-top:4px}
 @keyframes cardIn{from{opacity:0;transform:translateY(10px) scale(.94)}to{opacity:1;transform:none}}@keyframes popIn{from{opacity:0;transform:scale(.95) translateY(8px)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 @media(max-width:720px){
-  body{padding:5px}.frame{padding:4px;border-radius:19px}.table{border-radius:15px;min-height:calc(100dvh - 10px)}.table-inner{padding:9px}.brand-mark{width:31px;height:31px;border-radius:9px;font-size:18px}.brand{font-size:14px}.top-meta{gap:5px}.chip{padding:6px 8px;font-size:10px}.chip.deck-chip{display:none}
+  body{padding:5px}.frame{padding:4px;border-radius:19px}.table{border-radius:15px;min-height:calc(100dvh - 10px)}.table-inner{padding:9px}.brand-mark{width:31px;height:31px;border-radius:9px;font-size:18px}.brand{font-size:14px}.top-meta{gap:5px}.chip{padding:6px 8px;font-size:10px}.chip.deck-chip{display:none}.score-official{font-size:8px}.score-line{gap:8px}.score-line .score-name{letter-spacing:.08em}.center-rank{font-size:46px}.corner-rank{font-size:11px}.corner-suit{font-size:9px}.pip{font-size:15px}.court-rank{font-size:35px}.court-suit{font-size:12px}
   .score-card{min-width:210px;padding:8px 17px 7px}.board{grid-template-rows:auto minmax(250px,1fr) auto;gap:9px}.player-card{width:96%}.center-stage{gap:11px}.table-label:before,.table-label:after{width:20px}.sequence{min-height:88px;min-width:96%;padding:11px 8px}.seq{width:45px;height:62px;font-size:17px}.sequence{gap:6px}.card{width:clamp(48px,13vw,60px);border-radius:8px}.my-hand{justify-content:flex-start;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding:4px 5px 12px}.my-hand::-webkit-scrollbar{display:none}.my-hand .card{width:clamp(57px,15vw,70px);flex:0 0 auto}.actions{width:100%}.primary,.secondary{flex:1;min-width:135px}.dev-tools{margin-top:4px}
   .lobby-frame{min-height:calc(100dvh - 10px)}.lobby-card{width:94%;padding:28px 20px}.lobby-buttons{grid-template-columns:1fr}.join-row{flex-direction:column}
 }
@@ -116,14 +120,15 @@ button{border:0}
 
       <div class="scorebar">
         <div class="score-card">
-          <div class="score-line"><span>A</span><strong id="smallA">0</strong><em>–</em><strong id="smallB">0</strong><span>B</span></div>
+          <div class="score-line"><span id="scoreLeftLabel">TU</span><strong id="smallYou">0</strong><em>–</em><strong id="smallOpp">0</strong><span id="scoreRightLabel">ADVERSAR</span></div>
           <div class="score-caption">runda</div>
+          <div class="score-official" id="officialRoundScore">A 0 – 0 B</div>
         </div>
       </div>
 
       <div class="board">
         <div class="opponent-panel">
-          <div class="player-card" id="oppPlayerCard"><div class="avatar" id="oppAvatar">B</div><div class="player-copy"><div class="player-kicker">Adversar</div><div class="player-value"><span id="oppCount">0</span> cărți</div></div><span id="oppTurn" class="turn-dot"></span></div>
+          <div class="player-card" id="oppPlayerCard"><div class="avatar" id="oppAvatar">B</div><div class="player-copy"><div class="player-kicker">Adversar</div><div class="player-value"><span id="oppRole">Jucător B</span> · <span id="oppCount">0</span> cărți</div></div><span id="oppTurn" class="turn-dot"></span></div>
         </div>
 
         <div class="center-stage">
@@ -146,7 +151,7 @@ button{border:0}
         </div>
 
         <div class="hand-zone">
-          <div class="hand-label">Mâna ta · <span id="me">A</span></div>
+          <div class="hand-label">MÂNA TA · <span id="me">A</span></div>
           <div id="hand" class="cards my-hand"></div>
         </div>
       </div>
@@ -182,7 +187,18 @@ function show(){ $("lobby").classList.add("hidden"); $("game").classList.remove(
 function setConnection(text,visible){ $("connection").textContent=text; $("connection").classList.toggle("hidden",!visible); }
 function lobbyReady(){ $("lobbyState").textContent="Alege: creează o cameră sau introdu codul adversarului."; }
 function joinRoom(){ $("roomCode").value=$("roomCode").value.toUpperCase().trim(); socket.emit("join_room",$("roomCode").value); }
-function rankMarkup(c){ return '<span class="card-rank">'+c+'</span><span class="card-seal">Ș</span><span class="card-rank bottom">'+c+'</span>'; }
+function visualSuit(index){return ["♠","♥","♦","♣"][index%4]}
+function suitClass(suit){return suit==="♥"||suit==="♦"?"red":"black"}
+function pipCells(count){const map={7:[0,2,3,5,4,6,8],8:[0,2,3,5,6,8,9,11],9:[0,2,3,4,5,6,8,9,11],10:[0,2,3,4,5,6,8,9,10,11]};return map[count]||[]}
+function cardFaceMarkup(c,index){
+  const suit=visualSuit(index), cls=suitClass(suit);
+  let center="";
+  if(c==="A") center='<div class="center-rank '+cls+'">A</div><div class="center-suit '+cls+'">'+suit+'</div>';
+  else if(["J","Q","K"].includes(c)) center='<div class="court-card '+cls+'"><div class="court-rank">'+c+'</div><div class="court-suit">'+suit+'</div></div>';
+  else center='<div class="pip-grid '+cls+'">'+pipCells(Number(c)).map(i=>'<span class="pip" style="grid-area:'+ (Math.floor(i/3)+1)+' / '+((i%3)+1)+'">'+suit+'</span>').join('')+'</div>';
+  return '<div class="card-face"><div class="corner top '+cls+'"><span class="corner-rank">'+c+'</span><span class="corner-suit">'+suit+'</span></div>'+center+'<div class="corner bottom '+cls+'"><span class="corner-rank">'+c+'</span><span class="corner-suit">'+suit+'</span></div></div>';
+}
+
 function renderResult(s){
   const finished=["round_finished","round_draw","game_finished"].includes(s.status);
   $("resultOverlay").classList.toggle("hidden",!finished);
@@ -196,9 +212,26 @@ function renderResult(s){
   $("resultNext").classList.toggle("hidden",!canNext);
   $("resultNext").disabled=!canNext;
 }
+let collectionTimer=0,collectionToken=0;
+function renderSequence(seq,collecting=false,winner=null){
+  if(!seq.length)return '<span class="empty">Nicio secvență activă</span>';
+  if(!collecting)return seq.map((c,i)=>'<div class="seq '+suitClass(visualSuit(i))+(i===seq.length-1?' fresh':'')+'">'+cardFaceMarkup(c,i)+'</div>'+(i<seq.length-1?'<span class="seq-arrow">→</span>':'')).join('');
+  const x=winner===0?'calc(-1 * min(24vw, 220px))':'min(24vw, 220px)';
+  return '<span class="collection-label">'+(winner===me?'Tu iei cărțile':'Se strâng cărțile')+'</span>'+seq.map((c,i)=>'<div class="seq collecting '+suitClass(visualSuit(i))+'" style="--collect-x:'+x+'">'+cardFaceMarkup(c,i)+'</div>').join('');
+}
+function updateScoreLabels(s){
+  const you=s.small[s.player],opp=s.small[1-s.player];
+  $("smallYou").textContent=you;$("smallOpp").textContent=opp;
+  $("scoreLeftLabel").textContent="TU";$("scoreRightLabel").textContent="ADVERSAR";
+  $("officialRoundScore").textContent="A "+s.small[0]+" – "+s.small[1]+" B";
+  $("gameScore").textContent="A "+s.big[0]+" – "+s.big[1]+" B";
+}
 function renderState(s){
   const previous=lastState;
   const ownTurn=s.status==="playing"&&s.turn===s.player;
+  const collecting=Boolean(previous&&previous.sequence&&previous.sequence.length&&!s.sequence.length&&
+    ((s.pileCounts[0]||0)>((previous.pileCounts&&previous.pileCounts[0])||0)||(s.pileCounts[1]||0)>((previous.pileCounts&&previous.pileCounts[1])||0)));
+  const token=++collectionToken;
   if(previous){
     const becameMyTurn=ownTurn&&!(previous.status==="playing"&&previous.turn===previous.player);
     const cardAdded=s.sequence.length>previous.sequence.length;
@@ -209,24 +242,26 @@ function renderState(s){
   }
   lastState=s;show();
   $("code").textContent=s.room;$("me").textContent=s.player?"B":"A";$("round").textContent=s.round;
-  $("deck").textContent=s.deck;$("deckVisual").textContent=s.deck;$("smallA").textContent=s.small[0];$("smallB").textContent=s.small[1];$("gameScore").textContent="A "+s.big[0]+" – "+s.big[1]+" B";
+  $("oppAvatar").textContent=s.player?"A":"B";$("oppRole").textContent=s.player?"Jucător A":"Jucător B";
+  $("deck").textContent=s.deck;$("deckVisual").textContent=s.deck;
+  updateScoreLabels(s);
   $("oppCount").textContent=s.opponentCount;
-  $("opp").innerHTML=Array.from({length:s.opponentCount},()=>'<div class="card back" aria-hidden="true">?</div>').join("");
-  
-  $("hand").innerHTML=s.hand.map(c=>'<div class="card '+(ownTurn?"active-card":"disabled")+'" data-c="'+c+'" role="button" tabindex="'+(ownTurn?"0":"-1")+'" aria-disabled="'+(!ownTurn)+'" aria-label="Joacă cartea '+c+'">'+rankMarkup(c)+'</div>').join("");
+  $("opp").innerHTML=Array.from({length:s.opponentCount},()=>'<div class="card back" aria-hidden="true"><div class="back-medallion">Ș</div></div>').join("");
+  $("hand").innerHTML=s.hand.map((c,i)=>'<div class="card '+(ownTurn?"active-card":"disabled")+'" data-c="'+c+'" role="button" tabindex="'+(ownTurn?"0":"-1")+'" aria-disabled="'+(!ownTurn)+'" aria-label="Joacă cartea '+c+'">'+cardFaceMarkup(c,i)+'</div>').join("");
   [...$("hand").children].forEach(x=>{
     x.onclick=()=>ownTurn&&(primeAudio(),socket.emit("play_card",x.dataset.c));
     x.onkeydown=e=>{if(ownTurn&&(e.key==="Enter"||e.key===" ")){e.preventDefault();primeAudio();socket.emit("play_card",x.dataset.c)}};
   });
-  $("sequence").innerHTML=s.sequence.length?s.sequence.map((c,i)=>'<div class="seq" style="animation-delay:'+Math.min(i*.05,.2)+'s">'+rankMarkup(c)+'</div>'+(i<s.sequence.length-1?'<span class="seq-arrow">→</span>':'')).join(""):'<span class="empty">Nicio secvență activă</span>';
-  $("status").textContent=s.status==="waiting"?"Așteaptă adversarul.":s.status==="playing"?(ownTurn?"Este rândul tău.":"Așteaptă adversarul."):s.roundResult?.draw?"Egalitate — joc dublu.":s.status==="game_finished"?"Partida s-a terminat.":"Runda s-a terminat.";
+  $("sequence").innerHTML=collecting?renderSequence(previous.sequence,true,s.pileCounts[0]>(previous.pileCounts[0]||0)?0:1):renderSequence(s.sequence);
+  $("sequence").classList.toggle("collecting",collecting);
+  if(collecting){$("status").textContent=me===s.pileCounts.findIndex((v,i)=>v>(previous.pileCounts[i]||0))?"Tu iei cărțile.":"Cărțile sunt strânse.";clearTimeout(collectionTimer);collectionTimer=setTimeout(()=>{if(collectionToken===token){$("sequence").innerHTML=renderSequence(s.sequence);$("sequence").classList.remove("collecting")}},1250)}
+  $("status").textContent=collecting?((s.pileCounts[0]>(previous.pileCounts[0]||0)?(s.player===0?"Tu":"Adversarul")+" ia cărțile.":(s.player===1?"Tu":"Adversarul")+" ia cărțile.")):s.status==="waiting"?"Așteaptă adversarul.":s.status==="playing"?(ownTurn?"Este rândul tău.":"Așteaptă adversarul."):s.roundResult?.draw?"Egalitate — joc dublu.":s.status==="game_finished"?"Partida s-a terminat.":"Runda s-a terminat.";
   $("statusSub").textContent=ownTurn?"Alege o carte sau spune „Ia-le” când este permis.":"";
   $("oppTurn").classList.toggle("active",s.status==="playing"&&s.turn===1-s.player);
   $("oppPlayerCard").classList.toggle("active",s.status==="playing"&&s.turn===1-s.player);
   $("pileAVisualCount").textContent=s.pileCounts[0];$("pileBVisualCount").textContent=s.pileCounts[1];
   $("pileAVisualPoints").textContent=s.pilePoints[0]+"p";$("pileBVisualPoints").textContent=s.pilePoints[1]+"p";
-  $("pileAVisual").classList.toggle("turn-pulse",s.status==="playing"&&s.turn===0);
-  $("pileBVisual").classList.toggle("turn-pulse",s.status==="playing"&&s.turn===1);
+  $("pileAVisual").classList.toggle("turn-pulse",s.status==="playing"&&s.turn===0);$("pileBVisual").classList.toggle("turn-pulse",s.status==="playing"&&s.turn===1);
   $("game").classList.toggle("game-turn",ownTurn);
   $("take").disabled=!(ownTurn&&s.sequence.length>=2);
   const showNext=["round_finished","round_draw","game_finished"].includes(s.status);
@@ -234,6 +269,7 @@ function renderState(s){
   $("log").textContent=s.log.join("\n");
   renderResult(s);
 }
+
 $("create").onclick=()=>socket.emit("create_room");
 $("join").onclick=joinRoom;$("joinSecondary").onclick=joinRoom;
 $("roomCode").addEventListener("keydown",e=>{if(e.key==="Enter")joinRoom()});
