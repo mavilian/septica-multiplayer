@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 220" role="img" aria-labelledby="title desc">
+<title id="title">Șeptică Multiplayer</title><desc id="desc">Wordmark Șeptică într-un stil de masă de cărți.</desc>
+<rect width="900" height="220" rx="44" fill="#0b2416"/>
+<path d="M55 44h790v132H55z" fill="none" stroke="#d7b45c" stroke-width="4" opacity=".35"/>
+<text x="450" y="137" text-anchor="middle" font-family="Georgia,serif" font-size="94" font-weight="700" fill="#f7f2e5">Șeptică</text>
+<text x="450" y="174" text-anchor="middle" font-family="Arial,sans-serif" font-size="18" font-weight="700" letter-spacing="7" fill="#d7b45c">MULTIPLAYER</text>
+</svg>
