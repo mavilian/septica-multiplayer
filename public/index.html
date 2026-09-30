@@ -11,7 +11,7 @@
 <link rel="manifest" href="/manifest.json">
 <link rel="icon" href="/icons/septica-mark.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/icons/septica-mark.svg">
-<title>Șeptică Multiplayer</title>
+<title>Șeptică Multiplayer</title><!-- Card artwork source: hayeah/playing-cards-assets; public-domain source artwork. See docs/asset-sources.md. -->
 <style>
 :root{
   --felt:#123a22;--felt-deep:#082416;--felt-shadow:#05180d;
@@ -171,6 +171,32 @@ button{border:0}
 .pile-stack{position:absolute;left:9px;bottom:7px;width:30px;height:40px}.pile-stack span{position:absolute;inset:0;border-radius:5px;background:linear-gradient(145deg,#29583a,#14351f);border:1px solid rgba(241,218,148,.22);box-shadow:2px -2px 0 rgba(12,39,24,.72),4px -4px 0 rgba(12,39,24,.48)}.pile-stack span:nth-child(1){transform:rotate(-5deg) translate(-2px,1px)}.pile-stack span:nth-child(2){transform:rotate(2deg) translate(1px,-1px)}.pile-stack span:nth-child(3){transform:rotate(-1deg)}
 .pile-display.right .pile-stack{left:auto;right:9px}.pile-display .pile-letter{margin-left:37px}.pile-display.right .pile-letter{margin-left:0;margin-right:37px}
 .card .pip-grid{pointer-events:none}.pip{display:grid;place-items:center}
+
+.card{background:transparent;border:0;box-shadow:none;overflow:visible;aspect-ratio:2.5/3.5;perspective:900px}
+.card:before,.card:after{display:none}
+.card-art{position:absolute;inset:0;width:100%;height:100%;display:block;object-fit:fill;border-radius:10px;filter:drop-shadow(0 11px 12px rgba(0,0,0,.22));user-select:none;-webkit-user-drag:none;transition:transform .18s var(--ease),filter .18s ease}
+.card:hover:not(.disabled) .card-art{transform:translateY(-7px) rotate(-1deg);filter:drop-shadow(0 18px 18px rgba(0,0,0,.28))}
+.card.active-card .card-art{filter:drop-shadow(0 0 8px rgba(239,207,113,.32)) drop-shadow(0 13px 16px rgba(0,0,0,.28))}
+.card:active:not(.disabled) .card-art{transform:translateY(-2px) scale(.985)}
+.card.disabled .card-art{opacity:.36;filter:grayscale(.15) saturate(.72) drop-shadow(0 5px 7px rgba(0,0,0,.13))}
+.card-art.pending{opacity:.15}
+.seq{background:transparent;border:0;box-shadow:none;aspect-ratio:2.5/3.5;padding:0}
+.seq .card-art{filter:drop-shadow(0 7px 9px rgba(0,0,0,.18))}
+.seq.collecting .card-art{animation:cardImageCollect 1.8s cubic-bezier(.18,.72,.18,1) both}
+.back-card-art{position:absolute;inset:0;width:100%;height:100%;display:block;border-radius:10px;filter:drop-shadow(0 8px 10px rgba(0,0,0,.23))}
+@keyframes cardImageCollect{0%{opacity:1}72%{opacity:1}100%{opacity:0}}
+@media(max-width:720px){.card{width:64px}.opponent-hand .card{width:46px}.seq{width:45px}.card-art,.seq .card-art,.back-card-art{border-radius:8px}.my-hand .card{width:64px}}
+
+.table:after{content:"";position:absolute;inset:0;pointer-events:none;background:
+radial-gradient(circle at 50% 35%,transparent 0,transparent 48%,rgba(0,0,0,.10) 100%),
+repeating-linear-gradient(0deg,rgba(255,255,255,.010) 0 1px,transparent 1px 5px);mix-blend-mode:soft-light}
+.hand-zone{position:relative}.hand-zone:before{content:"";position:absolute;left:8%;right:8%;top:-1px;height:1px;background:linear-gradient(90deg,transparent,rgba(241,218,148,.20),transparent)}
+.card{will-change:transform;touch-action:manipulation}
+@media(max-width:720px){
+  .topbar{padding-top:env(safe-area-inset-top)}
+  .hand-zone{padding-bottom:max(6px,env(safe-area-inset-bottom))}
+  .card-art,.back-card-art{border-radius:8px}
+}
 </style>
 </head>
 <body>
@@ -285,22 +311,22 @@ function setConnection(text,visible){ $("connection").textContent=text; $("conne
 function lobbyReady(){ $("lobbyState").textContent="Alege: creează o cameră sau introdu codul adversarului."; }
 function joinRoom(){ $("roomCode").value=$("roomCode").value.toUpperCase().trim(); socket.emit("join_room",$("roomCode").value); }
 function visualSuit(card,index,items=[]){
-  const value=typeof card==="object"&&card?String(card.suit||""): "";
-  if(value){const map={"S":"♠","SPADES":"♠","♠":"♠","H":"♥","HEARTS":"♥","♥":"♥","D":"♦","DIAMONDS":"♦","♦":"♦","C":"♣","CLUBS":"♣","♣":"♣"};return map[value.toUpperCase()]||value}
+  const raw=typeof card==="object"&&card?String(card.suit||""):"";
+  if(raw){const map={"S":"spades","SPADES":"spades","♠":"spades","H":"hearts","HEARTS":"hearts","♥":"hearts","D":"diamonds","DIAMONDS":"diamonds","♦":"diamonds","C":"clubs","CLUBS":"clubs","♣":"clubs"};return map[raw.toUpperCase()]||raw}
   const rank=String(typeof card==="object"&&card?card.rank:card);
   const occurrence=items.slice(0,index).filter(x=>String(typeof x==="object"&&x?x.rank:x)===rank).length;
-  return ["♠","♥","♦","♣"][occurrence%4];
+  return ["spades","hearts","diamonds","clubs"][occurrence%4];
 }
-function suitClass(suit){return suit==="♥"||suit==="♦"?"red":"black"}
-function pipCells(count){const map={7:[0,2,3,5,4,6,8],8:[0,2,3,5,6,8,9,11],9:[0,2,3,4,5,6,8,9,11],10:[0,2,3,4,5,6,8,9,10,11]};return map[count]||[]}
+function assetRank(card){
+  const rank=String(typeof card==="object"&&card?card.rank:card);
+  return rank==="A"?"ace":rank==="J"?"jack":rank==="Q"?"queen":rank==="K"?"king":rank;
+}
+function cardAssetPath(card,index,items=[]){
+  return "/cards/"+assetRank(card)+"_of_"+visualSuit(card,index,items)+".svg";
+}
 function cardFaceMarkup(card,index,items=[]){
   const rank=String(typeof card==="object"&&card?card.rank:card);
-  const suit=visualSuit(card,index,items),cls=suitClass(suit);
-  let center="";
-  if(rank==="A") center='<div class="center-rank '+cls+'">A</div><div class="center-suit '+cls+'">'+suit+'</div>';
-  else if(["J","Q","K"].includes(rank)) center='<div class="court-card '+cls+'"><div class="court-rank">'+rank+'</div><div class="court-suit">'+suit+'</div></div>';
-  else center='<div class="pip-grid '+cls+'">'+pipCells(Number(rank)).map(i=>'<span class="pip">'+suit+'</span>').map((el,n)=>el.replace('class="pip"','class="pip" style="grid-area:'+ (Math.floor(pipCells(Number(rank))[n]/3)+1)+' / '+((pipCells(Number(rank))[n]%3)+1)+'"')).join('')+'</div>';
-  return '<div class="card-face"><div class="corner top '+cls+'"><span class="corner-rank">'+rank+'</span><span class="corner-suit">'+suit+'</span></div>'+center+'<div class="corner bottom '+cls+'"><span class="corner-rank">'+rank+'</span><span class="corner-suit">'+suit+'</span></div></div>';
+  return '<img class="card-art" src="'+cardAssetPath(card,index,items)+'" alt="'+rank+' carte" draggable="false">';
 }
 
 function renderResult(s){
@@ -322,7 +348,7 @@ function renderSequence(seq,collecting=false,winner=null){
   if(!seq.length)return '<span class="empty">Nicio secvență activă</span>';
   if(!collecting)return seq.map((c,i)=>'<div class="seq '+suitClass(visualSuit(c,i,seq))+(i===seq.length-1?' fresh':'')+'">'+cardFaceMarkup(c,i,seq)+'</div>'+(i<seq.length-1?'<span class="seq-arrow">→</span>':'')).join('');
   const x=winner===0?'calc(-1 * min(30vw, 280px))':'min(30vw, 280px)';
-  return '<span class="collection-label">'+(winner===me?'Tu iei cărțile':'Se strâng cărțile')+'</span>'+seq.map((c,i)=>'<div class="seq collecting '+suitClass(visualSuit(c,i,seq))+'" style="--collect-x:'+x+'">'+cardFaceMarkup(c,i,seq)+'</div>').join('');
+  return '<span class="collection-label">'+(winner===me?'Tu iei cărțile':'Se strâng cărțile')+'</span>'+seq.map((c,i)=>'<div class="seq collecting" style="--collect-x:'+x+'">'+cardFaceMarkup(c,i,seq)+'</div>').join('');
 }
 function updateScoreLabels(s){
   const you=s.small[s.player],opp=s.small[1-s.player];
@@ -355,7 +381,7 @@ function renderState(s){
   $("deck").textContent=s.deck;$("deckVisual").textContent=s.deck;
   updateScoreLabels(s);
   $("oppCount").textContent=s.opponentCount;
-  $("opp").innerHTML=Array.from({length:s.opponentCount},()=>'<div class="card back" aria-hidden="true"><div class="back-medallion">♠</div></div>').join("");
+  $("opp").innerHTML=Array.from({length:s.opponentCount},()=>'<div class="card" aria-hidden="true"><img class="back-card-art" src="/cards/card-back.svg" alt="" draggable="false"></div>').join("");
 
   $("hand").innerHTML=s.hand.map((c,i)=>'<div class="card '+(ownTurn?"active-card":"disabled")+'" data-c="'+cardValue(c)+'" role="button" tabindex="'+(ownTurn?"0":"-1")+'" aria-disabled="'+(!ownTurn)+'" aria-label="Joacă cartea '+cardValue(c)+'">'+cardFaceMarkup(c,i,s.hand)+'</div>').join("");
   [...$("hand").children].forEach(x=>{

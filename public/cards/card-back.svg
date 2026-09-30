@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 700">
+<defs>
+  <pattern id="p" width="28" height="28" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+    <rect width="28" height="28" fill="#173b27"/>
+    <path d="M0 14H28M14 0V28" stroke="#d8b65d" stroke-width="1" opacity=".12"/>
+    <rect x="4" y="4" width="20" height="20" fill="none" stroke="#d8b65d" stroke-width="1" opacity=".10"/>
+  </pattern>
+  <linearGradient id="edge" x1="0" x2="1" y1="0" y2="1">
+    <stop stop-color="#f2dc91"/><stop offset=".5" stop-color="#b48732"/><stop offset="1" stop-color="#f2dc91"/>
+  </linearGradient>
+  <radialGradient id="med" cx="50%" cy="45%" r="60%">
+    <stop stop-color="#2b6340"/><stop offset="1" stop-color="#0c2b1a"/>
+  </radialGradient>
+</defs>
+<rect x="10" y="10" width="480" height="680" rx="30" fill="#0c2618" stroke="url(#edge)" stroke-width="10"/>
+<rect x="28" y="28" width="444" height="644" rx="22" fill="url(#p)" stroke="#d8b65d" stroke-width="2" opacity=".96"/>
+<rect x="45" y="45" width="410" height="610" rx="16" fill="none" stroke="#d8b65d" stroke-width="2" opacity=".34"/>
+<circle cx="250" cy="350" r="112" fill="url(#med)" stroke="#d8b65d" stroke-width="3" opacity=".98"/>
+<circle cx="250" cy="350" r="94" fill="none" stroke="#f0d890" stroke-width="1.5" opacity=".35"/>
+<path d="M250 255c-24 31-51 56-51 83 0 28 22 51 51 51s51-23 51-51c0-27-27-52-51-83Z" fill="none" stroke="#f0d890" stroke-width="8" opacity=".92"/>
+<text x="250" y="401" text-anchor="middle" font-family="Georgia, serif" font-weight="700" font-size="82" fill="#f0d890">Ș</text>
+<text x="250" y="482" text-anchor="middle" font-family="Arial, sans-serif" font-size="17" font-weight="700" letter-spacing="7" fill="#e8cf80" opacity=".88">ȘEPTICĂ</text>
+</svg>
