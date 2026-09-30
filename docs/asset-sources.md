@@ -18,3 +18,9 @@ Source page: https://github.com/hayeah/playing-cards-assets/tree/master/svg-card
 
 ## Important data note
 The current game engine only sends rank values to the client. The UI therefore selects deterministic suit artwork for visual testing when a real suit is not supplied. This does not change game rules. When the engine exposes authoritative `rank + suit + card id`, the renderer can switch to exact card instances without a visual redesign.
+
+## Court card artwork added in UI redesign v2
+- **Source:** AustinGabriel/Public-Domain-and-CC0-Playing-Cards
+- **Repository:** https://github.com/AustinGabriel/Public-Domain-and-CC0-Playing-Cards
+- **Used files:** the illustrated Jack, Queen and King SVGs from the four suit folders.
+- **License statement:** the source repository README states that its assets are public domain / CC0 and that the deck includes ornate court-style face cards. The project uses those assets locally rather than hotlinking them.
