@@ -79,11 +79,11 @@ input{min-width:0;height:46px;padding:0 14px;border-radius:13px;border:1px solid
   .actions{width:100%}.primary,.secondary{flex:1;min-width:130px}.hand-zone{padding-top:11px}
   .lobby-shell{min-height:calc(100dvh - 12px);padding:16px}.lobby-actions{grid-template-columns:1fr}.join-row{flex-direction:column}
 }
-</style>
+<style>.connection-banner{position:fixed;left:50%;top:12px;transform:translateX(-50%);z-index:20;padding:10px 16px;border-radius:999px;background:#3a2411;color:#f5ddb0;border:1px solid #a97a3b;box-shadow:0 10px 28px rgba(0,0,0,.25);font-weight:700}.state-banner{margin-top:10px;padding:10px 12px;border-radius:10px;background:#193b23;border:1px solid #37663f;color:#d9e6dc}.waiting{color:#d9c77c}@media(max-width:650px){.connection-banner{width:calc(100% - 20px);text-align:center;font-size:13px}}</style>
 </head>
 <body>
 <main>
-<section id="lobby" class="wood-frame">
+<section id="lobby" class="wood-frame"><div id="lobbyState" class="state-banner waiting">Conectare la server…</div>
   <div class="lobby-shell table">
     <div class="lobby-card">
       <div class="lobby-kicker">Șeptică Multiplayer</div>
@@ -145,15 +145,15 @@ input{min-width:0;height:46px;padding:0 14px;border-radius:13px;border:1px solid
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const socket=io(),$=id=>document.getElementById(id);let me=0;
+const socket=io(),$=id=>document.getElementById(id);let me=0;\nfunction setConnection(text,show){$("connection").textContent=text;$("connection").classList.toggle("hidden",!show)}\nfunction lobbyReady(){$("lobbyState").textContent="Alege: creează o cameră sau introdu codul adversarului."}
 function show(){$("lobby").classList.add("hidden");$("game").classList.remove("hidden")}
 function joinRoom(){$("roomCode").value=$("roomCode").value.toUpperCase().trim();socket.emit("join_room",$("roomCode").value)}
 $("create").onclick=()=>socket.emit("create_room");
 $("join").onclick=joinRoom;
 $("joinSecondary").onclick=joinRoom;
 $("roomCode").addEventListener("keydown",e=>{if(e.key==="Enter")joinRoom()});
-socket.on("room_created",d=>{me=d.player;show();$("code").textContent=d.code;$("me").textContent="A"});
-socket.on("room_joined",d=>{me=d.player;show();$("code").textContent=d.code;$("me").textContent="B"});
+socket.on("connect",()=>{setConnection("",false);lobbyReady()});\nsocket.on("disconnect",()=>{setConnection("Conexiunea a fost pierdută. Reîncercăm…",true);if(document.body.contains($("status"))) $("status").textContent="Reconectare la server…"});\nsocket.on("connect_error",()=>setConnection("Nu ne putem conecta la server.",true));\nsocket.on("room_created",d=>{me=d.player;show();$("code").textContent=d.code;$("me").textContent="A";$("lobbyState").textContent="Așteaptă adversarul…"});
+socket.on("room_joined",d=>{me=d.player;show();$("code").textContent=d.code;$("me").textContent="B";$("lobbyState").textContent="Ai intrat la masă."});
 socket.on("error_message",m=>$("message").textContent=m);
 socket.on("opponent_disconnected",()=>{$("status").textContent="Adversarul s-a deconectat. Așteaptă reconectarea.";});
 socket.on("state",s=>{
@@ -166,7 +166,7 @@ socket.on("state",s=>{
   [...$("hand").children].forEach(x=>x.onclick=()=>!x.classList.contains("disabled")&&socket.emit("play_card",x.dataset.c));
   $("sequence").innerHTML=s.sequence.length?s.sequence.map((c,i)=>`<div class="seq">${c}</div>${i<s.sequence.length-1?'<span class="seq-arrow">→</span>':''}`).join(""):'<span class="empty">Nicio secvență activă</span>';
   const ownTurn=s.status==="playing"&&s.turn===s.player;
-  $("status").textContent=s.status==="playing"?(ownTurn?"Este rândul tău.":"Așteaptă adversarul."):(s.roundResult?.draw?"Egalitate — joc dublu.":s.status==="game_finished"?"Partida s-a terminat.":"Runda s-a terminat.");
+  $("status").textContent=s.status==="waiting"?"Așteaptă adversarul.":s.status==="playing"?(ownTurn?"Este rândul tău.":"Așteaptă adversarul."):(s.roundResult?.draw?"Egalitate — joc dublu.":s.status==="game_finished"?"Partida s-a terminat.":"Runda s-a terminat.");
   $("oppTurn").classList.toggle("active",s.status==="playing"&&s.turn===1-s.player);
   $("take").disabled=!(ownTurn&&s.sequence.length>=2);
   $("next").classList.toggle("hidden",!(s.status==="round_finished"||s.status==="round_draw"||s.status==="game_finished"));
