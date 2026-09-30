@@ -819,7 +819,7 @@ function renderState(s){
   $("sequence").innerHTML=collecting?'<span class="sequence-hint">'+(winner===s.player?"Iei cărțile":"Cărțile se strâng")+"</span>":renderSequence(s.sequence);
   $("sequence").classList.remove("collecting");
   updateTurnRibbon(s,ownTurn,collecting);
-  if(!collecting&&previous&&s.sequence.length>previous.sequence.length){
+  if(!collecting&&previous&&s.sequence.length>previous.sequence.length&&previous.turn===1-s.player){
     const justPlayed=s.sequence[s.sequence.length-1];
     requestAnimationFrame(()=>animateOpponentReveal(justPlayed,s.sequence.length-1,s.sequence));
   }
