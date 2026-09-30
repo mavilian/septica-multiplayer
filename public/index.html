@@ -197,11 +197,327 @@ repeating-linear-gradient(0deg,rgba(255,255,255,.010) 0 1px,transparent 1px 5px)
   .hand-zone{padding-bottom:max(6px,env(safe-area-inset-bottom))}
   .card-art,.back-card-art{border-radius:8px}
 }
+
+/* Premium presentation layer: original art + high-fidelity interaction polish. */
+:root{
+  --gold-soft:rgba(239,213,140,.12);
+  --surface-shadow:0 26px 60px rgba(0,0,0,.28);
+}
+body{
+  background:
+    radial-gradient(circle at 50% 10%,rgba(91,150,91,.08),transparent 35%),
+    radial-gradient(circle at 50% 100%,rgba(0,0,0,.30),transparent 55%),
+    #06110a;
+}
+.frame{position:relative;isolation:isolate}
+.frame:before{
+  content:"";position:absolute;inset:2px;border-radius:inherit;pointer-events:none;z-index:-1;
+  box-shadow:0 0 0 1px rgba(255,245,205,.045),inset 0 1px 0 rgba(255,238,181,.06);
+}
+.topbar{padding:2px 2px 0}
+.brand-lockup{filter:drop-shadow(0 7px 14px rgba(0,0,0,.18))}
+.brand-mark,.lobby-mark{position:relative;overflow:hidden}
+.brand-mark:after,.lobby-mark:after{
+  content:"";position:absolute;width:120%;height:42%;top:-8%;left:-24%;transform:rotate(-18deg);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.26),transparent);
+  animation:markSheen 5.5s ease-in-out infinite;pointer-events:none;
+}
+@keyframes markSheen{
+  0%,72%,100%{transform:translateX(-80%) rotate(-18deg)}
+  84%{transform:translateX(75%) rotate(-18deg)}
+}
+.score-card{
+  position:relative;overflow:hidden;
+  box-shadow:var(--surface-shadow),inset 0 1px 0 rgba(255,255,255,.045);
+}
+.score-card:before{
+  content:"";position:absolute;left:10%;right:10%;top:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(241,218,148,.46),transparent);
+}
+.score-card.score-change{animation:scoreBump .42s var(--ease) both}
+@keyframes scoreBump{0%{transform:scale(1)}38%{transform:scale(1.025)}100%{transform:scale(1)}}
+.player-card{
+  position:relative;overflow:hidden;
+  background:linear-gradient(180deg,rgba(10,34,20,.46),rgba(3,16,9,.25));
+  box-shadow:0 12px 28px rgba(0,0,0,.12),inset 0 1px 0 rgba(255,255,255,.035);
+}
+.player-card:after{
+  content:"";position:absolute;inset:auto 12px 0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(241,218,148,.22),transparent);
+  opacity:0;transition:opacity .2s ease;
+}
+.player-card.active:after{opacity:1}
+.avatar,.self-avatar{
+  position:relative;
+  box-shadow:0 5px 16px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.08);
+}
+.center-stage{overflow:visible}
+.table-mark{
+  position:absolute;z-index:0;width:min(580px,92%);left:50%;top:40%;
+  transform:translate(-50%,-50%);opacity:.56;
+  filter:blur(.1px) drop-shadow(0 14px 24px rgba(0,0,0,.14));
+  pointer-events:none;user-select:none;
+}
+.center-stage > *:not(.table-mark){position:relative;z-index:1}
+.turn-ribbon{
+  width:max-content;max-width:90%;min-height:24px;margin:0 auto;
+  display:flex;align-items:center;gap:7px;padding:5px 10px;
+  border:1px solid rgba(241,218,148,.12);border-radius:999px;
+  background:rgba(3,16,9,.24);color:#91a39a;text-transform:uppercase;
+  letter-spacing:.13em;font-size:8px;font-weight:900;
+  transition:background .2s ease,border-color .2s ease,color .2s ease,box-shadow .2s ease;
+}
+.turn-ribbon.active{
+  color:#f0d98f;border-color:rgba(241,218,148,.30);
+  background:rgba(37,52,28,.34);box-shadow:0 8px 22px rgba(0,0,0,.14);
+}
+.turn-ribbon.waiting{opacity:.72}
+.turn-ribbon-dot{
+  width:6px;height:6px;border-radius:50%;background:#68776f;
+  box-shadow:0 0 0 3px rgba(104,119,111,.10);
+}
+.turn-ribbon.active .turn-ribbon-dot{
+  background:#efd477;box-shadow:0 0 0 3px rgba(239,212,119,.11),0 0 13px rgba(239,212,119,.38);
+}
+.table-assets{position:relative;z-index:2;filter:drop-shadow(0 12px 18px rgba(0,0,0,.10))}
+.pile-display{
+  transition:transform .18s var(--ease),border-color .18s ease,box-shadow .18s ease,background .18s ease;
+}
+.pile-display.turn-pulse{
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.02),0 0 0 1px rgba(241,218,148,.06),0 12px 24px rgba(0,0,0,.14);
+}
+.pile-display.collect-hit{
+  border-color:rgba(241,218,148,.34);background:rgba(43,33,16,.24);
+  animation:pileHit .55s var(--ease) both;
+}
+@keyframes pileHit{
+  0%{transform:scale(1)}
+  35%{transform:scale(1.035) translateY(-2px)}
+  100%{transform:scale(1)}
+}
+.pile-display .pile-stack span{
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.10),transparent 48%),
+    url("/cards/card-back.svg") center/cover no-repeat,
+    linear-gradient(145deg,#29583a,#14351f);
+}
+.pile-display .pile-stack span:nth-child(1){opacity:.30}
+.pile-display .pile-stack span:nth-child(2){opacity:.52}
+.pile-display .pile-stack span:nth-child(3){opacity:.88}
+.deck-stack span{
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.10),transparent 46%),
+    url("/cards/card-back.svg") center/cover no-repeat,
+    linear-gradient(145deg,#29583a,#14351f);
+}
+.deck-display{position:relative}
+.deck-display:after{
+  content:"";position:absolute;inset:-6px -10px;border-radius:18px;
+  background:radial-gradient(circle,rgba(239,213,140,.09),transparent 68%);
+  z-index:-1;pointer-events:none;
+}
+.sequence{
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.025),0 12px 28px rgba(0,0,0,.08);
+  backdrop-filter:blur(1px);
+}
+.sequence:not(:has(.empty)){
+  background:linear-gradient(180deg,rgba(2,13,7,.31),rgba(2,13,7,.18));
+}
+.seq{transition:filter .2s ease}
+.seq.fresh{animation:seqFresh .46s var(--ease) both}
+@keyframes seqFresh{
+  0%{opacity:0;transform:translateY(-20px) rotate(-5deg) scale(.90)}
+  65%{opacity:1;transform:translateY(3px) rotate(1deg) scale(1.025)}
+  100%{opacity:1;transform:none}
+}
+.seq-arrow{opacity:.48;transition:opacity .18s ease}
+.sequence:hover .seq-arrow{opacity:.68}
+.collection-label{
+  top:5px;padding:3px 7px;border-radius:999px;background:rgba(3,16,9,.42);
+  border:1px solid rgba(241,218,148,.10);
+}
+.card{-webkit-tap-highlight-color:transparent}
+.card.pressing .card-art{
+  transform:translateY(1px) scale(.985)!important;
+  filter:brightness(.98) drop-shadow(0 5px 7px rgba(0,0,0,.18))!important;
+}
+.card.deal-in{
+  animation:dealIn .52s var(--ease) both;
+  animation-delay:calc(var(--card-index, 0) * 48ms);
+}
+@keyframes dealIn{
+  0%{opacity:0;transform:translateY(28px) rotate(-4deg) scale(.90)}
+  68%{opacity:1;transform:translateY(-3px) rotate(1deg) scale(1.015)}
+  100%{opacity:1;transform:none}
+}
+.opponent-hand .card.deal-in{
+  animation:dealBackIn .46s var(--ease) both;
+  animation-delay:calc(var(--card-index, 0) * 42ms);
+}
+@keyframes dealBackIn{
+  0%{opacity:0;transform:translateY(-20px) rotate(3deg) scale(.90)}
+  70%{opacity:1;transform:translateY(2px) rotate(-1deg) scale(1.02)}
+  100%{opacity:1;transform:none}
+}
+.my-hand{position:relative;perspective:900px}
+.my-hand .card{transition:transform .2s var(--ease),filter .2s ease}
+.my-hand .card:nth-child(1){--fan:-4deg}
+.my-hand .card:nth-child(2){--fan:-1.5deg}
+.my-hand .card:nth-child(3){--fan:1.5deg}
+.my-hand .card:nth-child(4){--fan:4deg}
+.my-hand .card:not(.pressing){transform:rotate(var(--fan,0deg))}
+.my-hand .card.active-card:hover:not(.disabled){
+  transform:translateY(-12px) rotate(0deg) scale(1.015);
+}
+.self-player-card{
+  position:relative;display:flex;align-items:center;gap:9px;
+  width:min(270px,90%);margin:0 auto 2px;padding:6px 11px;
+  border:1px solid rgba(241,218,148,.10);border-radius:13px;
+  background:linear-gradient(180deg,rgba(5,24,13,.34),rgba(5,24,13,.18));
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.025);
+  transition:box-shadow .2s ease,border-color .2s ease,transform .2s var(--ease);
+}
+.self-player-card.active{
+  border-color:rgba(241,218,148,.30);
+  box-shadow:0 10px 28px rgba(0,0,0,.15),0 0 0 3px rgba(241,218,148,.035),inset 0 1px 0 rgba(255,255,255,.04);
+  transform:translateY(-1px);
+}
+.self-avatar{
+  width:29px;height:29px;flex:0 0 29px;display:grid;place-items:center;
+  border-radius:50%;background:linear-gradient(145deg,#7a5b31,#30200e);
+  color:var(--gold-hi);border:1px solid rgba(241,218,148,.28);
+  font-weight:950;font-size:11px;
+}
+.self-copy{min-width:0;display:grid;gap:1px}
+.self-kicker{font-size:8px;letter-spacing:.16em;color:#83958c;text-transform:uppercase}
+.self-copy strong{font-size:12px}
+.self-turn-dot{
+  margin-left:auto;width:7px;height:7px;border-radius:50%;background:#637268;
+  box-shadow:0 0 0 3px rgba(99,114,104,.08);
+}
+.self-turn-dot.active{
+  background:#ead07a;box-shadow:0 0 0 3px rgba(234,208,122,.11),0 0 14px rgba(234,208,122,.36);
+  animation:dotPulse 1.25s ease-in-out infinite;
+}
+@keyframes dotPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.28)}}
+.action-row{position:relative;padding-top:2px}
+.action-row:before{
+  content:"";position:absolute;left:24%;right:24%;top:-2px;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(241,218,148,.10),transparent);
+}
+.status{min-height:22px;transition:transform .2s var(--ease),opacity .2s ease}
+.status.status-pop{animation:statusPop .34s var(--ease) both}
+@keyframes statusPop{
+  0%{transform:translateY(3px);opacity:.45}
+  100%{transform:translateY(0);opacity:1}
+}
+.primary,.secondary{
+  position:relative;overflow:hidden;box-shadow:0 9px 20px rgba(0,0,0,.20);
+  touch-action:manipulation;
+}
+.primary:after,.secondary:after{
+  content:"";position:absolute;inset:1px;border-radius:inherit;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.12);pointer-events:none;
+}
+.primary:hover:not(:disabled){
+  box-shadow:0 13px 26px rgba(0,0,0,.24),inset 0 1px 0 rgba(255,255,255,.13);
+}
+.fx-toast{backdrop-filter:blur(8px);animation:toastPremium 1.15s var(--ease) both}
+@keyframes toastPremium{
+  0%{opacity:0;transform:translate(-50%,-42%) scale(.92)}
+  14%{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  78%{opacity:1;transform:translate(-50%,-50%)}
+  100%{opacity:0;transform:translate(-50%,-62%) scale(.97)}
+}
+.result-card,.lobby-card{position:relative;overflow:hidden}
+.result-card:before,.lobby-card:before{
+  content:"";position:absolute;left:10%;right:10%;top:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(241,218,148,.44),transparent);
+}
+.lobby-card:after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(circle at 50% 0%,rgba(241,218,148,.08),transparent 36%);
+}
+.value-pop{animation:valuePop .42s var(--ease) both}
+@keyframes valuePop{
+  0%{transform:scale(1)}
+  45%{transform:scale(1.22);color:var(--gold-hi)}
+  100%{transform:scale(1)}
+}
+@media(max-width:720px){
+  .table-mark{width:118%;top:43%;opacity:.40}
+  .turn-ribbon{min-height:22px;padding:4px 9px}
+  .table-assets{gap:10px;max-width:100%}
+  .pile-display{padding:6px 7px;gap:7px}
+  .pile-display strong{font-size:13px}
+  .pile-display em{font-size:9px}
+  .pile-stack{transform:scale(.90)}
+  .deck-display{padding:3px 4px}
+  .sequence-wrap{padding-inline:2px}
+  .self-player-card{width:min(230px,88%);padding:5px 10px}
+  .action-row:before{left:12%;right:12%}
+}
+@media(prefers-reduced-motion:reduce){
+  .brand-mark:after,.lobby-mark:after,.self-turn-dot.active{animation:none!important}
+  .card.deal-in,.opponent-hand .card.deal-in,.seq.fresh,.score-card.score-change,.pile-display.collect-hit,.fx-toast,.value-pop{animation:none!important}
+}
+
+
+.demo-launch{
+  margin:18px auto 0;
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  padding:7px 10px;
+  border-radius:999px;
+  background:rgba(3,16,9,.34);
+  border:1px solid rgba(241,218,148,.12);
+  color:#889a91;
+  font-size:10px;
+  font-weight:800;
+  cursor:pointer;
+  transition:transform .16s ease,border-color .16s ease,color .16s ease;
+}
+.demo-launch:hover{transform:translateY(-1px);border-color:rgba(241,218,148,.26);color:#d9c48a}
+.demo-mode-badge{
+  position:fixed;
+  left:50%;
+  bottom:14px;
+  transform:translateX(-50%);
+  z-index:40;
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:7px 10px;
+  border-radius:999px;
+  background:rgba(7,22,13,.90);
+  border:1px solid rgba(241,218,148,.18);
+  color:#d4c18a;
+  box-shadow:0 12px 32px rgba(0,0,0,.24);
+  font-size:10px;
+  font-weight:850;
+  backdrop-filter:blur(8px);
+}
+.demo-step{
+  border:0;
+  border-radius:999px;
+  padding:5px 8px;
+  background:rgba(241,218,148,.10);
+  color:#f0dc9b;
+  font-size:9px;
+  font-weight:900;
+  cursor:pointer;
+}
+@media(max-width:720px){.demo-mode-badge{bottom:max(8px,env(safe-area-inset-bottom));font-size:9px}}
+
+
+.lobby-utilities{display:flex;flex-wrap:wrap;justify-content:center;gap:7px;margin-top:2px}
+@media(max-width:720px){.lobby-utilities{display:grid;grid-template-columns:1fr}.lobby-utilities .demo-launch{width:100%;justify-content:center}}
 </style>
 </head>
 <body>
-<div id="connection" class="connection hidden"></div>
-<div id="fxLayer" class="fx-layer" aria-live="polite"></div>
+<div id="connection" class="connection hidden"></div><span id="me" hidden></span>
+<div id="fxLayer" class="fx-layer" aria-live="polite"></div><div id="demoBadge" class="demo-mode-badge hidden">PREVIEW UI <button id="demoStep" class="demo-step" type="button">următorul pas</button></div>
 
 <section id="lobby" class="frame lobby-frame">
   <div class="table lobby-frame">
@@ -218,7 +534,7 @@ repeating-linear-gradient(0deg,rgba(255,255,255,.010) 0 1px,transparent 1px 5px)
         <input id="roomCode" maxlength="5" placeholder="COD MASĂ" aria-label="Cod masă" autocomplete="off">
         <button class="secondary" id="joinSecondary">Intră</button>
       </div>
-      <p id="message" class="message"></p>
+      <p id="message" class="message"></p><div class="lobby-utilities"><button id="demoLaunch" class="demo-launch" type="button">Previzualizare UI · solo</button><button id="qaLaunch" class="demo-launch" type="button">Test 1v1 · două conexiuni</button></div>
       <div id="lobbyState" class="lobby-state">Conectare la server…</div>
     </div>
   </div>
@@ -237,7 +553,7 @@ repeating-linear-gradient(0deg,rgba(255,255,255,.010) 0 1px,transparent 1px 5px)
       </div>
 
       <div class="scorebar">
-        <div class="score-card">
+        <div class="score-card" id="score-card">
           <div class="score-line"><span id="scoreLeftLabel">TU</span><strong id="smallYou">0</strong><em>–</em><strong id="smallOpp">0</strong><span id="scoreRightLabel">ADVERSAR</span></div>
           <div class="score-caption">runda</div>
           <div class="score-official" id="officialRoundScore">A 0 – 0 B</div>
@@ -250,6 +566,7 @@ repeating-linear-gradient(0deg,rgba(255,255,255,.010) 0 1px,transparent 1px 5px)
         </div>
 
         <div class="center-stage">
+          <img class="table-mark" src="/ui/septica-table-mark.svg" alt="" aria-hidden="true">
           <div class="opponent-hand"><div id="opp" class="cards"></div></div>
           <div class="table-assets" aria-label="Elemente ale mesei">
             <div class="pile-display" id="pileAVisual"><div class="pile-stack" aria-hidden="true"><span></span><span></span><span></span></div><span class="pile-letter">A</span><div><small>grămadă</small><strong id="pileAVisualCount">0</strong></div><em id="pileAVisualPoints">0p</em></div>
@@ -260,6 +577,7 @@ repeating-linear-gradient(0deg,rgba(255,255,255,.010) 0 1px,transparent 1px 5px)
             <div class="pile-display right" id="pileBVisual"><div class="pile-stack" aria-hidden="true"><span></span><span></span><span></span></div><span class="pile-letter">B</span><div><small>grămadă</small><strong id="pileBVisualCount">0</strong></div><em id="pileBVisualPoints">0p</em></div>
           </div>
           <div class="table-label">masa de joc</div>
+          <div class="turn-ribbon waiting" id="turnRibbon"><span class="turn-ribbon-dot"></span><span id="turnRibbonText">Așteaptă adversarul</span></div>
           <div class="sequence-wrap"><div id="sequence" class="sequence"><span class="empty">Nicio secvență activă</span></div></div>
           <div class="action-row">
             <div id="status" class="status" aria-live="polite">Așteaptă adversarul.</div>
@@ -299,17 +617,56 @@ repeating-linear-gradient(0deg,rgba(255,255,255,.010) 0 1px,transparent 1px 5px)
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const socket=io(),$=id=>document.getElementById(id);let me=0,lastState=null,audioCtx=null;
+const socket=io(),$=id=>document.getElementById(id);let me=0,lastState=null,audioCtx=null;const urlParams=new URLSearchParams(location.search),demoMode=urlParams.get("demo")==="1",qaMode=urlParams.get("qa"),qaChannel=qaMode&&"BroadcastChannel"in window?new BroadcastChannel("septica-qa-v1"):null;let demoStep=0,qaJoinSent=false;
 function audio(){if(audioCtx)return audioCtx;try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();}catch{return null}return audioCtx}
 function tone(freq,duration=.07,type="sine",gain=.035,offset=0){const ctx=audio();if(!ctx)return;try{const now=ctx.currentTime+offset,o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.setValueAtTime(freq,now);g.gain.setValueAtTime(.0001,now);g.gain.exponentialRampToValueAtTime(gain,now+.008);g.gain.exponentialRampToValueAtTime(.0001,now+duration);o.connect(g);g.connect(ctx.destination);o.start(now);o.stop(now+duration+.02)}catch{}}
 function sound(kind){if(kind==="turn"){tone(660,.08,"sine",.03);tone(880,.11,"sine",.025,.07)}else if(kind==="card"){tone(390,.045,"triangle",.022)}else if(kind==="take"){tone(240,.08,"square",.024);tone(180,.10,"square",.018,.07)}else if(kind==="finish"){tone(523,.11,"sine",.03);tone(659,.12,"sine",.026,.09);tone(784,.16,"sine",.022,.19)}}
 function toast(text,kind=""){const n=document.createElement("div");n.className="fx-toast"+(kind?" "+kind:"");n.textContent=text;$("fxLayer").appendChild(n);setTimeout(()=>n.remove(),900)}
 function primeAudio(){const ctx=audio();if(ctx&&ctx.state==="suspended")ctx.resume().catch(()=>{})}
 document.addEventListener("pointerdown",primeAudio,{once:true});
+
+const demoBase={
+  room:"DEMO1",player:0,players:[true,true],status:"playing",round:3,game:1,
+  small:[1,0],big:[0,0],roundDouble:false,roundResult:null,gameResult:null,deck:18,
+  hand:["10","7","K","A"],opponentCount:4,sequence:[],turn:0,
+  pileCounts:[3,4],pilePoints:[1,2],log:["Previzualizare UI locală.","Nu este conectat la o partidă reală."]
+};
+function qaJoinFromMessage(ev){
+  if(qaMode!=="guest"||qaJoinSent||!ev?.data||ev.data.type!=="septica-qa-room"||!ev.data.code)return;
+  qaJoinSent=true;
+  $("roomCode").value=String(ev.data.code).toUpperCase();
+  socket.emit("join_room",$("roomCode").value);
+}
+if(qaChannel)qaChannel.addEventListener("message",qaJoinFromMessage);
+
+function demoState(step){
+  const s=structuredClone(demoBase);
+  if(step>=1){s.sequence=["10"];s.hand=["7","K","A"];s.turn=0;s.deck=17}
+  if(step>=2){s.sequence=["10","10"];s.hand=["7","K","A"];s.turn=0;s.deck=16}
+  if(step>=3){s.sequence=["10","10","7"];s.hand=["K","A"];s.turn=0;s.deck=15}
+  if(step>=4){s.sequence=[];s.hand=["K","A","9","Q"];s.pileCounts=[3,7];s.pilePoints=[1,4];s.deck=15;s.turn=0}
+  if(step>=5){s.sequence=["Q"];s.hand=["K","A","9"];s.turn=0;s.deck=14}
+  return s;
+}
+function renderDemo(){
+  $("demoBadge").classList.remove("hidden");
+  show();
+  renderState(demoState(demoStep));
+}
+function advanceDemo(){
+  primeAudio();
+  demoStep=demoStep>=5?0:demoStep+1;
+  if(demoStep===4){sound("take");toast("Secvență colectată","gold")}
+  renderDemo();
+}
+
 function show(){ $("lobby").classList.add("hidden"); $("game").classList.remove("hidden"); }
 function setConnection(text,visible){ $("connection").textContent=text; $("connection").classList.toggle("hidden",!visible); }
 function lobbyReady(){ $("lobbyState").textContent="Alege: creează o cameră sau introdu codul adversarului."; }
 function joinRoom(){ $("roomCode").value=$("roomCode").value.toUpperCase().trim(); socket.emit("join_room",$("roomCode").value); }
+function suitClass(suit){
+  return ["hearts","diamonds"].includes(String(suit))?"red":"black";
+}
 function visualSuit(card,index,items=[]){
   const raw=typeof card==="object"&&card?String(card.suit||""):"";
   if(raw){const map={"S":"spades","SPADES":"spades","♠":"spades","H":"hearts","HEARTS":"hearts","♥":"hearts","D":"diamonds","DIAMONDS":"diamonds","♦":"diamonds","C":"clubs","CLUBS":"clubs","♣":"clubs"};return map[raw.toUpperCase()]||raw}
@@ -327,6 +684,22 @@ function cardAssetPath(card,index,items=[]){
 function cardFaceMarkup(card,index,items=[]){
   const rank=String(typeof card==="object"&&card?card.rank:card);
   return '<img class="card-art" src="'+cardAssetPath(card,index,items)+'" alt="'+rank+' carte" draggable="false">';
+}
+
+
+function updateTurnRibbon(s,ownTurn,collecting){
+  const ribbon=$("turnRibbon"),label=$("turnRibbonText");
+  if(!ribbon||!label)return;
+  const opponentTurn=s.status==="playing"&&s.turn===1-s.player;
+  const active=ownTurn&&!collecting;
+  ribbon.classList.toggle("active",active);
+  ribbon.classList.toggle("waiting",!active);
+  label.textContent=collecting?"Se strâng cărțile":ownTurn?"Rândul tău":opponentTurn?"Rândul adversarului":s.status==="waiting"?"Așteaptă adversarul":"Runda s-a încheiat";
+}
+function popValue(id){
+  const el=$(id);if(!el)return;
+  el.classList.remove("value-pop");void el.offsetWidth;el.classList.add("value-pop");
+  setTimeout(()=>el.classList.remove("value-pop"),430);
 }
 
 function renderResult(s){
@@ -379,18 +752,31 @@ function renderState(s){
   $("code").textContent=s.room;$("me").textContent=s.player?"B":"A";$("round").textContent=s.round;
   $("oppAvatar").textContent=s.player?"A":"B";$("oppRole").textContent=s.player?"Jucător A":"Jucător B";$("selfAvatar").textContent=s.player?"B":"A";$("selfRole").textContent=s.player?"Jucător B":"Jucător A";
   $("deck").textContent=s.deck;$("deckVisual").textContent=s.deck;
+  const scoreChanged=Boolean(previous&&(previous.small[0]!==s.small[0]||previous.small[1]!==s.small[1]||previous.big[0]!==s.big[0]||previous.big[1]!==s.big[1]));
   updateScoreLabels(s);
+  if(scoreChanged){$("score-card").classList.remove("score-change");void $("score-card").offsetWidth;$("score-card").classList.add("score-change")}
   $("oppCount").textContent=s.opponentCount;
-  $("opp").innerHTML=Array.from({length:s.opponentCount},()=>'<div class="card" aria-hidden="true"><img class="back-card-art" src="/cards/card-back.svg" alt="" draggable="false"></div>').join("");
+  $("opp").innerHTML=Array.from({length:s.opponentCount},(_,i)=>'<div class="card deal-in" style="--card-index:'+i+'" aria-hidden="true"><img class="back-card-art" src="/cards/card-back.svg" alt="" draggable="false"></div>').join("");
 
-  $("hand").innerHTML=s.hand.map((c,i)=>'<div class="card '+(ownTurn?"active-card":"disabled")+'" data-c="'+cardValue(c)+'" role="button" tabindex="'+(ownTurn?"0":"-1")+'" aria-disabled="'+(!ownTurn)+'" aria-label="Joacă cartea '+cardValue(c)+'">'+cardFaceMarkup(c,i,s.hand)+'</div>').join("");
+  $("hand").innerHTML=s.hand.map((c,i)=>{
+    const rank=cardValue(c);
+    const beforeCount=s.hand.slice(0,i).filter(x=>cardValue(x)===rank).length;
+    const previousCount=previous&&previous.hand?previous.hand.filter(x=>cardValue(x)===rank).length:0;
+    const fresh=!previous||beforeCount>=previousCount;
+    return '<div class="card '+(ownTurn?"active-card":"disabled")+(fresh?' deal-in':'')+'" style="--card-index:'+i+'" data-c="'+rank+'" role="button" tabindex="'+(ownTurn?"0":"-1")+'" aria-disabled="'+(!ownTurn)+'" aria-label="Joacă cartea '+rank+'">'+cardFaceMarkup(c,i,s.hand)+'</div>';
+  }).join("");
+
   [...$("hand").children].forEach(x=>{
-    x.onclick=()=>ownTurn&&(primeAudio(),socket.emit("play_card",x.dataset.c));
-    x.onkeydown=e=>{if(ownTurn&&(e.key==="Enter"||e.key===" ")){e.preventDefault();primeAudio();socket.emit("play_card",x.dataset.c)}};
+    x.addEventListener("pointerdown",()=>x.classList.add("pressing"),{passive:true});
+    x.addEventListener("pointerup",()=>x.classList.remove("pressing"),{passive:true});
+    x.addEventListener("pointercancel",()=>x.classList.remove("pressing"),{passive:true});
+    x.onclick=()=>ownTurn&&(primeAudio(),demoMode?advanceDemo():socket.emit("play_card",x.dataset.c));
+    x.onkeydown=e=>{if(ownTurn&&(e.key==="Enter"||e.key===" ")){e.preventDefault();primeAudio();demoMode?advanceDemo():socket.emit("play_card",x.dataset.c)}};
   });
 
   $("sequence").innerHTML=collecting?renderSequence(previous.sequence,true,winner):renderSequence(s.sequence);
   $("sequence").classList.toggle("collecting",collecting);
+  updateTurnRibbon(s,ownTurn,collecting);
   if(collecting){
     $("status").textContent=winner===s.player?"Tu iei cărțile.":winner===null?"Cărțile se strâng.":"Adversarul ia cărțile.";
     $("statusSub").textContent="Vezi secvența înainte să dispară.";
@@ -398,14 +784,19 @@ function renderState(s){
     collectionTimer=setTimeout(()=>{if(collectionToken===token){$("sequence").innerHTML=renderSequence(s.sequence);$("sequence").classList.remove("collecting");$("statusSub").textContent=""}},1850);
   }
 
-  $("status").textContent=collecting?($("status").textContent):s.status==="waiting"?"Așteaptă adversarul.":s.status==="playing"?(ownTurn?"Este rândul tău.":"Așteaptă adversarul."):s.roundResult?.draw?"Egalitate — joc dublu.":s.status==="game_finished"?"Partida s-a terminat.":"Runda s-a terminat.";
+  const nextStatus=collecting?$("status").textContent:s.status==="waiting"?"Așteaptă adversarul.":s.status==="playing"?(ownTurn?"Este rândul tău.":"Așteaptă adversarul."):s.roundResult?.draw?"Egalitate — joc dublu.":s.status==="game_finished"?"Partida s-a terminat.":"Runda s-a terminat.";
+  if($("status").textContent!==nextStatus){$("status").classList.remove("status-pop");void $("status").offsetWidth;$("status").classList.add("status-pop")}
+  $("status").textContent=nextStatus;
   if(!collecting)$("statusSub").textContent=ownTurn?"Alege o carte sau spune „Ia-le” când este permis.":"";
   $("oppTurn").classList.toggle("active",s.status==="playing"&&s.turn===1-s.player);
   $("selfPlayerCard").classList.toggle("active",ownTurn);$("selfTurnDot").classList.toggle("active",ownTurn);
   $("oppPlayerCard").classList.toggle("active",s.status==="playing"&&s.turn===1-s.player);
   $("pileAVisualCount").textContent=s.pileCounts[0];$("pileBVisualCount").textContent=s.pileCounts[1];
+  if(aDelta)popValue("pileAVisualCount");
+  if(bDelta)popValue("pileBVisualCount");
   $("pileAVisualPoints").textContent=s.pilePoints[0]+"p";$("pileBVisualPoints").textContent=s.pilePoints[1]+"p";
   $("pileAVisual").classList.toggle("turn-pulse",s.status==="playing"&&s.turn===0);$("pileBVisual").classList.toggle("turn-pulse",s.status==="playing"&&s.turn===1);
+  if(collecting){const target=winner===0?$("pileAVisual"):winner===1?$("pileBVisual"):null;if(target){target.classList.remove("collect-hit");void target.offsetWidth;target.classList.add("collect-hit");setTimeout(()=>target.classList.remove("collect-hit"),600)}}
   $("game").classList.toggle("game-turn",ownTurn);
   $("take").disabled=!(ownTurn&&s.sequence.length>=2);
   const showNext=["round_finished","round_draw","game_finished"].includes(s.status);
@@ -414,23 +805,26 @@ function renderState(s){
   renderResult(s);
 }
 
-$("create").onclick=()=>socket.emit("create_room");
+$("demoLaunch").onclick=()=>{location.search="?demo=1"};
+$("demoStep").onclick=()=>{advanceDemo()};
+if(demoMode){setTimeout(()=>{renderDemo();},0);}
+$("create").onclick=()=>socket.emit("create_room");$("qaLaunch").onclick=()=>{window.location.href="/qa.html"};
 $("join").onclick=joinRoom;$("joinSecondary").onclick=joinRoom;
 $("roomCode").addEventListener("keydown",e=>{if(e.key==="Enter")joinRoom()});
 $("copyRoom").onclick=async()=>{const code=$("code").textContent;try{await navigator.clipboard.writeText(code);$("copyRoom").textContent="copiat";setTimeout(()=>$("copyRoom").textContent="copiază",1200)}catch{$("copyRoom").textContent="selectează";setTimeout(()=>$("copyRoom").textContent="copiază",1200)}};$("shareRoom").onclick=async()=>{primeAudio();const code=$("code").textContent;const share={title:"Șeptică Multiplayer",text:"Intră la masa mea de Șeptică. Cod: "+code,url:window.location.href};try{if(navigator.share){await navigator.share(share);toast("Invitația este gata","gold")}else{await navigator.clipboard.writeText(share.text+" "+share.url);toast("Invitația a fost copiată","gold")}}catch(e){if(e&&e.name!=="AbortError")toast("Nu am putut distribui invitația")}};
 $("resultClose").onclick=()=>$("resultOverlay").classList.add("hidden");
 $("resultNext").onclick=()=>socket.emit("next_round");
-$("take").onclick=()=>{primeAudio();sound("take");socket.emit("take")};$("next").onclick=()=>{primeAudio();socket.emit("next_round")};
-socket.on("connect",()=>{setConnection("",false);lobbyReady()});
+$("take").onclick=()=>{primeAudio();if(demoMode){sound("take");advanceDemo();return}sound("take");socket.emit("take")};$("next").onclick=()=>{primeAudio();if(demoMode){advanceDemo();return}socket.emit("next_round")};
+socket.on("connect",()=>{setConnection("",false);lobbyReady();if(qaMode==="host"&&!qaJoinSent)setTimeout(()=>socket.emit("create_room"),120)});
 socket.on("disconnect",()=>{setConnection("Conexiunea a fost pierdută. Reîncercăm…",true);if(document.body.contains($("status"))) $("status").textContent="Reconectare la server…"});
 socket.on("connect_error",()=>setConnection("Nu ne putem conecta la server.",true));
 window.addEventListener("offline",()=>setConnection("Ești offline. Verificăm conexiunea…",true));
 window.addEventListener("online",()=>{if(socket.connected)setConnection("",false);else setConnection("Conexiunea revine…",true)});
-socket.on("room_created",d=>{me=d.player;show();$("code").textContent=d.code;$("me").textContent="A";$("lobbyState").textContent="Așteaptă adversarul…" });
+socket.on("room_created",d=>{me=d.player;show();$("code").textContent=d.code;$("me").textContent="A";$("lobbyState").textContent=qaMode==="host"?"QA host · cod transmis automat":"Așteaptă adversarul…";if(qaMode==="host"&&qaChannel)qaChannel.postMessage({type:"septica-qa-room",code:d.code})});
 socket.on("room_joined",d=>{me=d.player;show();$("code").textContent=d.code;$("me").textContent="B";$("lobbyState").textContent="Ai intrat la masă."});
 socket.on("error_message",m=>$("message").textContent=m);
 socket.on("opponent_disconnected",()=>{if(document.body.contains($("status"))) $("status").textContent="Adversarul s-a deconectat. Așteaptă reconectarea."});
-socket.on("state",renderState);
+socket.on("state",s=>{if(!demoMode)renderState(s)});
 </script>
 </body>
 </html>
