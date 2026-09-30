@@ -153,7 +153,7 @@ button{border:0}
   .collection-label{top:1px;font-size:8px}
   .action-row{gap:5px}.status{font-size:12px;min-height:18px}.status-sub{font-size:9px}
   .actions{width:100%}.primary,.secondary{min-height:43px;padding:9px 15px;font-size:13px;flex:1;min-width:0}
-  .hand-zone{padding-top:7px}.hand-label{font-size:8px;margin-bottom:4px}
+  .hand-zone{padding-top:6px}.self-player-card{width:96%;margin-bottom:5px;padding:6px 9px}.self-avatar{width:28px;height:28px}.self-copy strong{font-size:11px}.self-kicker{font-size:7px}.hand-label{font-size:8px;margin-bottom:3px}
   .my-hand{gap:0;justify-content:center;overflow:visible;padding:4px 12px 11px}
   .my-hand .card{width:64px;margin-left:-10px}.my-hand .card:first-child{margin-left:0}
   .my-hand .card:nth-child(1){transform:rotate(-6deg) translateY(2px)}.my-hand .card:nth-child(2){transform:rotate(-2deg)}.my-hand .card:nth-child(3){transform:rotate(2deg)}.my-hand .card:nth-child(4){transform:rotate(6deg) translateY(2px)}
@@ -167,6 +167,10 @@ button{border:0}
   .center-stage{min-height:0}
   .hand-zone{padding-top:12px}
 }
+.self-player-card{display:flex;align-items:center;gap:9px;width:min(340px,88%);margin:0 auto 8px;padding:7px 11px;border-radius:14px;background:rgba(5,24,13,.30);border:1px solid rgba(241,218,148,.10);transition:box-shadow .2s ease,border-color .2s ease}.self-player-card.active{border-color:rgba(241,218,148,.34);box-shadow:0 0 0 4px rgba(241,218,148,.05),0 10px 26px rgba(0,0,0,.16)}.self-avatar{width:30px;height:30px;display:grid;place-items:center;border-radius:50%;background:linear-gradient(145deg,#e1bf65,#8e6826);color:#241606;font-weight:950;font-family:Georgia,serif}.self-copy{display:flex;flex-direction:column;min-width:0}.self-kicker{text-transform:uppercase;letter-spacing:.14em;color:#879a8f;font-size:8px}.self-copy strong{font-size:12px;margin-top:1px}.self-turn-dot{margin-left:auto;width:8px;height:8px;border-radius:50%;background:#5f6d64}.self-turn-dot.active{background:#ead07a;box-shadow:0 0 0 4px rgba(234,208,122,.11),0 0 13px rgba(234,208,122,.40)}
+.pile-stack{position:absolute;left:9px;bottom:7px;width:30px;height:40px}.pile-stack span{position:absolute;inset:0;border-radius:5px;background:linear-gradient(145deg,#29583a,#14351f);border:1px solid rgba(241,218,148,.22);box-shadow:2px -2px 0 rgba(12,39,24,.72),4px -4px 0 rgba(12,39,24,.48)}.pile-stack span:nth-child(1){transform:rotate(-5deg) translate(-2px,1px)}.pile-stack span:nth-child(2){transform:rotate(2deg) translate(1px,-1px)}.pile-stack span:nth-child(3){transform:rotate(-1deg)}
+.pile-display.right .pile-stack{left:auto;right:9px}.pile-display .pile-letter{margin-left:37px}.pile-display.right .pile-letter{margin-left:0;margin-right:37px}
+.card .pip-grid{pointer-events:none}.pip{display:grid;place-items:center}
 </style>
 </head>
 <body>
@@ -222,12 +226,12 @@ button{border:0}
         <div class="center-stage">
           <div class="opponent-hand"><div id="opp" class="cards"></div></div>
           <div class="table-assets" aria-label="Elemente ale mesei">
-            <div class="pile-display" id="pileAVisual"><span class="pile-letter">A</span><div><small>grămadă</small><strong id="pileAVisualCount">0</strong></div><em id="pileAVisualPoints">0p</em></div>
+            <div class="pile-display" id="pileAVisual"><div class="pile-stack" aria-hidden="true"><span></span><span></span><span></span></div><span class="pile-letter">A</span><div><small>grămadă</small><strong id="pileAVisualCount">0</strong></div><em id="pileAVisualPoints">0p</em></div>
             <div class="deck-display" aria-label="Pachet">
               <div class="deck-stack"><span></span><span></span><span></span></div>
               <div class="deck-copy"><small>pachet</small><strong id="deckVisual">0</strong></div>
             </div>
-            <div class="pile-display right" id="pileBVisual"><span class="pile-letter">B</span><div><small>grămadă</small><strong id="pileBVisualCount">0</strong></div><em id="pileBVisualPoints">0p</em></div>
+            <div class="pile-display right" id="pileBVisual"><div class="pile-stack" aria-hidden="true"><span></span><span></span><span></span></div><span class="pile-letter">B</span><div><small>grămadă</small><strong id="pileBVisualCount">0</strong></div><em id="pileBVisualPoints">0p</em></div>
           </div>
           <div class="table-label">masa de joc</div>
           <div class="sequence-wrap"><div id="sequence" class="sequence"><span class="empty">Nicio secvență activă</span></div></div>
@@ -239,7 +243,12 @@ button{border:0}
         </div>
 
         <div class="hand-zone">
-          <div class="hand-label">MÂNA TA · <span id="me">A</span></div>
+          <div class="self-player-card" id="selfPlayerCard">
+            <div class="self-avatar" id="selfAvatar">A</div>
+            <div class="self-copy"><span class="self-kicker">TU</span><strong id="selfRole">Jucător A</strong></div>
+            <span class="self-turn-dot" id="selfTurnDot"></span>
+          </div>
+          <div class="hand-label">MÂNA TA</div>
           <div id="hand" class="cards my-hand"></div>
         </div>
       </div>
@@ -342,7 +351,7 @@ function renderState(s){
 
   lastState=s;show();
   $("code").textContent=s.room;$("me").textContent=s.player?"B":"A";$("round").textContent=s.round;
-  $("oppAvatar").textContent=s.player?"A":"B";$("oppRole").textContent=s.player?"Jucător A":"Jucător B";
+  $("oppAvatar").textContent=s.player?"A":"B";$("oppRole").textContent=s.player?"Jucător A":"Jucător B";$("selfAvatar").textContent=s.player?"B":"A";$("selfRole").textContent=s.player?"Jucător B":"Jucător A";
   $("deck").textContent=s.deck;$("deckVisual").textContent=s.deck;
   updateScoreLabels(s);
   $("oppCount").textContent=s.opponentCount;
@@ -366,6 +375,7 @@ function renderState(s){
   $("status").textContent=collecting?($("status").textContent):s.status==="waiting"?"Așteaptă adversarul.":s.status==="playing"?(ownTurn?"Este rândul tău.":"Așteaptă adversarul."):s.roundResult?.draw?"Egalitate — joc dublu.":s.status==="game_finished"?"Partida s-a terminat.":"Runda s-a terminat.";
   if(!collecting)$("statusSub").textContent=ownTurn?"Alege o carte sau spune „Ia-le” când este permis.":"";
   $("oppTurn").classList.toggle("active",s.status==="playing"&&s.turn===1-s.player);
+  $("selfPlayerCard").classList.toggle("active",ownTurn);$("selfTurnDot").classList.toggle("active",ownTurn);
   $("oppPlayerCard").classList.toggle("active",s.status==="playing"&&s.turn===1-s.player);
   $("pileAVisualCount").textContent=s.pileCounts[0];$("pileBVisualCount").textContent=s.pileCounts[1];
   $("pileAVisualPoints").textContent=s.pilePoints[0]+"p";$("pileBVisualPoints").textContent=s.pilePoints[1]+"p";
