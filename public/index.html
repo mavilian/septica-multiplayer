@@ -186,6 +186,17 @@ button{border:0}
 .back-card-art{position:absolute;inset:0;width:100%;height:100%;display:block;border-radius:10px;filter:drop-shadow(0 8px 10px rgba(0,0,0,.23))}
 @keyframes cardImageCollect{0%{opacity:1}72%{opacity:1}100%{opacity:0}}
 @media(max-width:720px){.card{width:64px}.opponent-hand .card{width:46px}.seq{width:45px}.card-art,.seq .card-art,.back-card-art{border-radius:8px}.my-hand .card{width:64px}}
+
+.table:after{content:"";position:absolute;inset:0;pointer-events:none;background:
+radial-gradient(circle at 50% 35%,transparent 0,transparent 48%,rgba(0,0,0,.10) 100%),
+repeating-linear-gradient(0deg,rgba(255,255,255,.010) 0 1px,transparent 1px 5px);mix-blend-mode:soft-light}
+.hand-zone{position:relative}.hand-zone:before{content:"";position:absolute;left:8%;right:8%;top:-1px;height:1px;background:linear-gradient(90deg,transparent,rgba(241,218,148,.20),transparent)}
+.card{will-change:transform;touch-action:manipulation}
+@media(max-width:720px){
+  .topbar{padding-top:env(safe-area-inset-top)}
+  .hand-zone{padding-bottom:max(6px,env(safe-area-inset-bottom))}
+  .card-art,.back-card-art{border-radius:8px}
+}
 </style>
 </head>
 <body>
