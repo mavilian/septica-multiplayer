@@ -212,7 +212,7 @@ function renderState(s){
   $("deck").textContent=s.deck;$("deckVisual").textContent=s.deck;$("smallA").textContent=s.small[0];$("smallB").textContent=s.small[1];$("gameScore").textContent="A "+s.big[0]+" – "+s.big[1]+" B";
   $("oppCount").textContent=s.opponentCount;
   $("opp").innerHTML=Array.from({length:s.opponentCount},()=>'<div class="card back" aria-hidden="true">?</div>').join("");
-  const ownTurn=s.status==="playing"&&s.turn===s.player;
+  
   $("hand").innerHTML=s.hand.map(c=>'<div class="card '+(ownTurn?"active-card":"disabled")+'" data-c="'+c+'" aria-label="Cartea '+c+'">'+rankMarkup(c)+'</div>').join("");
   [...$("hand").children].forEach(x=>x.onclick=()=>ownTurn&&socket.emit("play_card",x.dataset.c));
   $("sequence").innerHTML=s.sequence.length?s.sequence.map((c,i)=>'<div class="seq" style="animation-delay:'+Math.min(i*.05,.2)+'s">'+rankMarkup(c)+'</div>'+(i<s.sequence.length-1?'<span class="seq-arrow">→</span>':'')).join(""):'<span class="empty">Nicio secvență activă</span>';
