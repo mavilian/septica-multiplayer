@@ -757,7 +757,7 @@ function renderState(s){
     x.addEventListener("pointerup",()=>x.classList.remove("pressing"),{passive:true});
     x.addEventListener("pointercancel",()=>x.classList.remove("pressing"),{passive:true});
     x.onclick=()=>ownTurn&&(primeAudio(),demoMode?advanceDemo():socket.emit("play_card",x.dataset.c));
-    x.onkeydown=e=>{if(ownTurn&&(e.key==="Enter"||e.key===" ")){e.preventDefault();primeAudio();socket.emit("play_card",x.dataset.c)}};
+    x.onkeydown=e=>{if(ownTurn&&(e.key==="Enter"||e.key===" ")){e.preventDefault();primeAudio();demoMode?advanceDemo():socket.emit("play_card",x.dataset.c)}};
   });
 
   $("sequence").innerHTML=collecting?renderSequence(previous.sequence,true,winner):renderSequence(s.sequence);
@@ -810,7 +810,7 @@ socket.on("room_created",d=>{me=d.player;show();$("code").textContent=d.code;$("
 socket.on("room_joined",d=>{me=d.player;show();$("code").textContent=d.code;$("me").textContent="B";$("lobbyState").textContent="Ai intrat la masă."});
 socket.on("error_message",m=>$("message").textContent=m);
 socket.on("opponent_disconnected",()=>{if(document.body.contains($("status"))) $("status").textContent="Adversarul s-a deconectat. Așteaptă reconectarea."});
-socket.on("state",renderState);
+socket.on("state",s=>{if(!demoMode)renderState(s)});
 </script>
 </body>
 </html>
