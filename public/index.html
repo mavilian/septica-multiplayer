@@ -510,6 +510,9 @@ body{
 }
 @media(max-width:720px){.demo-mode-badge{bottom:max(8px,env(safe-area-inset-bottom));font-size:9px}}
 
+
+.lobby-utilities{display:flex;flex-wrap:wrap;justify-content:center;gap:7px;margin-top:2px}
+@media(max-width:720px){.lobby-utilities{display:grid;grid-template-columns:1fr}.lobby-utilities .demo-launch{width:100%;justify-content:center}}
 </style>
 </head>
 <body>
@@ -531,7 +534,7 @@ body{
         <input id="roomCode" maxlength="5" placeholder="COD MASĂ" aria-label="Cod masă" autocomplete="off">
         <button class="secondary" id="joinSecondary">Intră</button>
       </div>
-      <p id="message" class="message"></p><button id="demoLaunch" class="demo-launch" type="button">Previzualizare UI · solo</button>
+      <p id="message" class="message"></p><div class="lobby-utilities"><button id="demoLaunch" class="demo-launch" type="button">Previzualizare UI · solo</button><button id="qaLaunch" class="demo-launch" type="button">Test 1v1 · două conexiuni</button></div>
       <div id="lobbyState" class="lobby-state">Conectare la server…</div>
     </div>
   </div>
@@ -614,7 +617,7 @@ body{
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-const socket=io(),$=id=>document.getElementById(id);let me=0,lastState=null,audioCtx=null;const demoMode=new URLSearchParams(location.search).get("demo")==="1";let demoStep=0;
+const socket=io(),$=id=>document.getElementById(id);let me=0,lastState=null,audioCtx=null;const urlParams=new URLSearchParams(location.search),demoMode=urlParams.get("demo")==="1",qaMode=urlParams.get("qa"),qaChannel=qaMode&&"BroadcastChannel"in window?new BroadcastChannel("septica-qa-v1"):null;let demoStep=0,qaJoinSent=false;
 function audio(){if(audioCtx)return audioCtx;try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();}catch{return null}return audioCtx}
 function tone(freq,duration=.07,type="sine",gain=.035,offset=0){const ctx=audio();if(!ctx)return;try{const now=ctx.currentTime+offset,o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.setValueAtTime(freq,now);g.gain.setValueAtTime(.0001,now);g.gain.exponentialRampToValueAtTime(gain,now+.008);g.gain.exponentialRampToValueAtTime(.0001,now+duration);o.connect(g);g.connect(ctx.destination);o.start(now);o.stop(now+duration+.02)}catch{}}
 function sound(kind){if(kind==="turn"){tone(660,.08,"sine",.03);tone(880,.11,"sine",.025,.07)}else if(kind==="card"){tone(390,.045,"triangle",.022)}else if(kind==="take"){tone(240,.08,"square",.024);tone(180,.10,"square",.018,.07)}else if(kind==="finish"){tone(523,.11,"sine",.03);tone(659,.12,"sine",.026,.09);tone(784,.16,"sine",.022,.19)}}
@@ -628,6 +631,14 @@ const demoBase={
   hand:["10","7","K","A"],opponentCount:4,sequence:[],turn:0,
   pileCounts:[3,4],pilePoints:[1,2],log:["Previzualizare UI locală.","Nu este conectat la o partidă reală."]
 };
+function qaJoinFromMessage(ev){
+  if(qaMode!=="guest"||qaJoinSent||!ev?.data||ev.data.type!=="septica-qa-room"||!ev.data.code)return;
+  qaJoinSent=true;
+  $("roomCode").value=String(ev.data.code).toUpperCase();
+  socket.emit("join_room",$("roomCode").value);
+}
+if(qaChannel)qaChannel.addEventListener("message",qaJoinFromMessage);
+
 function demoState(step){
   const s=structuredClone(demoBase);
   if(step>=1){s.sequence=["10"];s.hand=["7","K","A"];s.turn=0;s.deck=17}
@@ -794,19 +805,19 @@ function renderState(s){
 $("demoLaunch").onclick=()=>{location.search="?demo=1"};
 $("demoStep").onclick=()=>{advanceDemo()};
 if(demoMode){setTimeout(()=>{renderDemo();},0);}
-$("create").onclick=()=>socket.emit("create_room");
+$("create").onclick=()=>socket.emit("create_room");$("qaLaunch").onclick=()=>{window.location.href="/qa.html"};
 $("join").onclick=joinRoom;$("joinSecondary").onclick=joinRoom;
 $("roomCode").addEventListener("keydown",e=>{if(e.key==="Enter")joinRoom()});
 $("copyRoom").onclick=async()=>{const code=$("code").textContent;try{await navigator.clipboard.writeText(code);$("copyRoom").textContent="copiat";setTimeout(()=>$("copyRoom").textContent="copiază",1200)}catch{$("copyRoom").textContent="selectează";setTimeout(()=>$("copyRoom").textContent="copiază",1200)}};$("shareRoom").onclick=async()=>{primeAudio();const code=$("code").textContent;const share={title:"Șeptică Multiplayer",text:"Intră la masa mea de Șeptică. Cod: "+code,url:window.location.href};try{if(navigator.share){await navigator.share(share);toast("Invitația este gata","gold")}else{await navigator.clipboard.writeText(share.text+" "+share.url);toast("Invitația a fost copiată","gold")}}catch(e){if(e&&e.name!=="AbortError")toast("Nu am putut distribui invitația")}};
 $("resultClose").onclick=()=>$("resultOverlay").classList.add("hidden");
 $("resultNext").onclick=()=>socket.emit("next_round");
 $("take").onclick=()=>{primeAudio();if(demoMode){sound("take");advanceDemo();return}sound("take");socket.emit("take")};$("next").onclick=()=>{primeAudio();if(demoMode){advanceDemo();return}socket.emit("next_round")};
-socket.on("connect",()=>{setConnection("",false);lobbyReady()});
+socket.on("connect",()=>{setConnection("",false);lobbyReady();if(qaMode==="host"&&!qaJoinSent)setTimeout(()=>socket.emit("create_room"),120)});
 socket.on("disconnect",()=>{setConnection("Conexiunea a fost pierdută. Reîncercăm…",true);if(document.body.contains($("status"))) $("status").textContent="Reconectare la server…"});
 socket.on("connect_error",()=>setConnection("Nu ne putem conecta la server.",true));
 window.addEventListener("offline",()=>setConnection("Ești offline. Verificăm conexiunea…",true));
 window.addEventListener("online",()=>{if(socket.connected)setConnection("",false);else setConnection("Conexiunea revine…",true)});
-socket.on("room_created",d=>{me=d.player;show();$("code").textContent=d.code;$("me").textContent="A";$("lobbyState").textContent="Așteaptă adversarul…" });
+socket.on("room_created",d=>{me=d.player;show();$("code").textContent=d.code;$("me").textContent="A";$("lobbyState").textContent=qaMode==="host"?"QA host · cod transmis automat":"Așteaptă adversarul…";if(qaMode==="host"&&qaChannel)qaChannel.postMessage({type:"septica-qa-room",code:d.code})});
 socket.on("room_joined",d=>{me=d.player;show();$("code").textContent=d.code;$("me").textContent="B";$("lobbyState").textContent="Ai intrat la masă."});
 socket.on("error_message",m=>$("message").textContent=m);
 socket.on("opponent_disconnected",()=>{if(document.body.contains($("status"))) $("status").textContent="Adversarul s-a deconectat. Așteaptă reconectarea."});
