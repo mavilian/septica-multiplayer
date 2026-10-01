@@ -1209,7 +1209,7 @@ $("take").onclick=()=>{
   setTimeout(()=>{pendingTakeFx=false},2300);
   socket.emit("take");
 };$("next").onclick=()=>{primeAudio();if(demoMode){advanceDemo();return}socket.emit("next_round")};
-socket.on("connect",()=>{setConnection("",false);lobbyReady();const saved=localStorage.getItem("septica-room");if(!demoMode&&saved){try{const d=JSON.parse(saved);if(d?.code&&(d.player===0||d.player===1)){socket.emit("reconnect_room",d);return}}catch{}}if(qaMode==="host"&&!qaJoinSent)setTimeout(()=>socket.emit("create_room"),120)});
+socket.on("connect",()=>{setConnection("",false);lobbyReady();const saved=sessionStorage.getItem("septica-room");if(!demoMode&&saved){try{const d=JSON.parse(saved);if(d?.code&&(d.player===0||d.player===1)){socket.emit("reconnect_room",d);return}}catch{}}if(qaMode==="host"&&!qaJoinSent)setTimeout(()=>socket.emit("create_room"),120)});
 socket.on("disconnect",()=>{
   setConnection("Conexiunea a fost pierdută. Reîncercăm…",true);
   if(pendingPlayFx){pendingPlayFx=null;$("hand").classList.remove("locked")}
@@ -1218,9 +1218,9 @@ socket.on("disconnect",()=>{
 socket.on("connect_error",()=>setConnection("Nu ne putem conecta la server.",true));
 window.addEventListener("offline",()=>setConnection("Ești offline. Verificăm conexiunea…",true));
 window.addEventListener("online",()=>{if(socket.connected)setConnection("",false);else setConnection("Conexiunea revine…",true)});
-socket.on("room_created",d=>{me=d.player;localStorage.setItem("septica-room",JSON.stringify({code:d.code,player:me}));show();$("code").textContent=d.code;$("me").textContent="A";$("lobbyState").textContent=qaMode==="host"?"QA host · cod transmis automat":"Așteaptă adversarul…";if(qaMode==="host"&&qaChannel)qaChannel.postMessage({type:"septica-qa-room",code:d.code})});
-socket.on("room_joined",d=>{me=d.player;localStorage.setItem("septica-room",JSON.stringify({code:d.code,player:me}));show();$("code").textContent=d.code;$("me").textContent="B";$("lobbyState").textContent="Ai intrat la masă."});
-socket.on("room_rejoined",d=>{me=d.player;localStorage.setItem("septica-room",JSON.stringify({code:d.code,player:me}));show();$("code").textContent=d.code;$("me").textContent=me?"B":"A";$("lobbyState").textContent="Reconectat la masă."});
+socket.on("room_created",d=>{me=d.player;sessionStorage.setItem("septica-room",JSON.stringify({code:d.code,player:me}));show();$("code").textContent=d.code;$("me").textContent="A";$("lobbyState").textContent=qaMode==="host"?"QA host · cod transmis automat":"Așteaptă adversarul…";if(qaMode==="host"&&qaChannel)qaChannel.postMessage({type:"septica-qa-room",code:d.code})});
+socket.on("room_joined",d=>{me=d.player;sessionStorage.setItem("septica-room",JSON.stringify({code:d.code,player:me}));show();$("code").textContent=d.code;$("me").textContent="B";$("lobbyState").textContent="Ai intrat la masă."});
+socket.on("room_rejoined",d=>{me=d.player;sessionStorage.setItem("septica-room",JSON.stringify({code:d.code,player:me}));show();$("code").textContent=d.code;$("me").textContent=me?"B":"A";$("lobbyState").textContent="Reconectat la masă."});
 socket.on("error_message",m=>{
   $("message").textContent=m;
   if(pendingPlayFx){
