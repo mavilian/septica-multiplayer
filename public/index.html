@@ -804,6 +804,7 @@ body{padding:0;min-height:100dvh;background:radial-gradient(ellipse at 50% 35%,r
 <script src="/socket.io/socket.io.js"></script>
 <script>
 
+const BUILD="2026-10-01-mp-fix-02"; console.info("[Șeptică] build",BUILD);
 const socket=io(),$=id=>document.getElementById(id);let me=0,lastState=null,audioCtx=null,pendingTakeFx=false;const urlParams=new URLSearchParams(location.search),demoMode=urlParams.get("demo")==="1",qaMode=urlParams.get("qa"),qaChannel=qaMode&&"BroadcastChannel"in window?new BroadcastChannel("septica-qa-v1"):null;let demoStep=0,qaJoinSent=false;
 function audio(){if(audioCtx)return audioCtx;try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();}catch{return null}return audioCtx}
 function tone(freq,duration=.07,type="sine",gain=.035,offset=0){const ctx=audio();if(!ctx)return;try{const now=ctx.currentTime+offset,o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.setValueAtTime(freq,now);g.gain.setValueAtTime(.0001,now);g.gain.exponentialRampToValueAtTime(gain,now+.008);g.gain.exponentialRampToValueAtTime(.0001,now+duration);o.connect(g);g.connect(ctx.destination);o.start(now);o.stop(now+duration+.02)}catch{}}
@@ -884,7 +885,7 @@ function cardFaceMarkup(card,index,items=[]){
 function updateTurnRibbon(s,ownTurn,collecting){
   const ribbon=$("turnRibbon"),label=$("turnRibbonText");
   if(!ribbon||!label)return;
-  const opponentTurn=s.status==="playing"&&s.turn===1-s.player;
+  const opponentTurn=s.status==="playing"&&s.players?.[0]&&s.players?.[1]&&s.turn===1-s.player;
   const active=ownTurn&&!collecting;
   ribbon.classList.toggle("active",active);
   ribbon.classList.toggle("waiting",!active);
@@ -1067,7 +1068,7 @@ function updateScoreLabels(s){
 }
 function renderState(s){
   const previous=lastState;
-  const ownTurn=s.status==="playing"&&s.turn===s.player;
+  const ownTurn=s.status==="playing"&&s.players?.[0]&&s.players?.[1]&&s.turn===s.player;
   const aDelta=s.pileCounts[0]-((previous&&previous.pileCounts&&previous.pileCounts[0])||0);
   const bDelta=s.pileCounts[1]-((previous&&previous.pileCounts&&previous.pileCounts[1])||0);
   const collecting=Boolean(previous&&previous.sequence&&previous.sequence.length&&!s.sequence.length);
@@ -1164,7 +1165,7 @@ function renderState(s){
     collectionTimer=setTimeout(()=>{if(collectionToken===token){$("sequence").innerHTML=renderSequence(s.sequence);$("sequence").classList.remove("collecting-base","collection-hold");$("statusSub").textContent=""}},COLLECTION_HOLD_MS);
   }
 
-  const nextStatus=collecting?$("status").textContent:s.status==="waiting"?"Așteaptă adversarul.":s.status==="playing"?(ownTurn?"Este rândul tău.":"Așteaptă adversarul."):s.roundResult?.draw?"Egalitate — joc dublu.":s.status==="game_finished"?"Partida s-a terminat.":"Runda s-a terminat.";
+  const nextStatus=collecting?$("status").textContent:s.status==="waiting"?"Așteaptă adversarul.":s.status==="playing"?(!s.players?.[0]||!s.players?.[1]?"Adversarul se reconectează…":(ownTurn?"Este rândul tău.":"Rândul adversarului.")):s.roundResult?.draw?"Egalitate — joc dublu.":s.status==="game_finished"?"Partida s-a terminat.":"Runda s-a terminat.";
   if($("status").textContent!==nextStatus){$("status").classList.remove("status-pop");void $("status").offsetWidth;$("status").classList.add("status-pop")}
   $("status").textContent=nextStatus;
   if(!collecting)$("statusSub").textContent=ownTurn?($("take").disabled?"Alege o carte.":"Alege o carte sau apasă IA-LE."): "";
@@ -1209,7 +1210,7 @@ $("take").onclick=()=>{
   setTimeout(()=>{pendingTakeFx=false},2300);
   socket.emit("take");
 };$("next").onclick=()=>{primeAudio();if(demoMode){advanceDemo();return}socket.emit("next_round")};
-socket.on("connect",()=>{setConnection("",false);lobbyReady();if(qaMode==="host"&&!qaJoinSent)setTimeout(()=>socket.emit("create_room"),120)});
+socket.on("connect",()=>{setConnection("",false);lobbyReady();const saved=sessionStorage.getItem("septica-room");if(!demoMode&&saved){try{const d=JSON.parse(saved);if(d?.code&&(d.player===0||d.player===1)){socket.emit("reconnect_room",d);return}}catch{sessionStorage.removeItem("septica-room")}}if(qaMode==="host"&&!qaJoinSent)setTimeout(()=>socket.emit("create_room"),120)});
 socket.on("disconnect",()=>{
   setConnection("Conexiunea a fost pierdută. Reîncercăm…",true);
   if(pendingPlayFx){pendingPlayFx=null;$("hand").classList.remove("locked")}
@@ -1218,8 +1219,9 @@ socket.on("disconnect",()=>{
 socket.on("connect_error",()=>setConnection("Nu ne putem conecta la server.",true));
 window.addEventListener("offline",()=>setConnection("Ești offline. Verificăm conexiunea…",true));
 window.addEventListener("online",()=>{if(socket.connected)setConnection("",false);else setConnection("Conexiunea revine…",true)});
-socket.on("room_created",d=>{me=d.player;show();$("code").textContent=d.code;$("me").textContent="A";$("lobbyState").textContent=qaMode==="host"?"QA host · cod transmis automat":"Așteaptă adversarul…";if(qaMode==="host"&&qaChannel)qaChannel.postMessage({type:"septica-qa-room",code:d.code})});
-socket.on("room_joined",d=>{me=d.player;show();$("code").textContent=d.code;$("me").textContent="B";$("lobbyState").textContent="Ai intrat la masă."});
+socket.on("room_created",d=>{me=d.player;sessionStorage.setItem("septica-room",JSON.stringify({code:d.code,player:me}));show();$("code").textContent=d.code;$("me").textContent="A";$("lobbyState").textContent=qaMode==="host"?"QA host · cod transmis automat":"Așteaptă adversarul…";if(qaMode==="host"&&qaChannel)qaChannel.postMessage({type:"septica-qa-room",code:d.code})});
+socket.on("room_joined",d=>{me=d.player;sessionStorage.setItem("septica-room",JSON.stringify({code:d.code,player:me}));show();$("code").textContent=d.code;$("me").textContent="B";$("lobbyState").textContent="Ai intrat la masă."});
+socket.on("room_rejoined",d=>{me=d.player;sessionStorage.setItem("septica-room",JSON.stringify({code:d.code,player:me}));show();$("code").textContent=d.code;$("me").textContent=me?"B":"A";$("lobbyState").textContent="Reconectat la masă."});
 socket.on("error_message",m=>{
   $("message").textContent=m;
   if(pendingPlayFx){
