@@ -918,7 +918,7 @@ function animatePlayedCard(cardEl,rank){
   const art=cardEl&&cardEl.querySelector(".card-art"),target=$("sequence");
   if(!art||!target||pendingPlayFx)return false;
   const a=art.getBoundingClientRect(),t=findSequenceTargetRect();if(!t)return false;
-  pendingPlayFx={rank:String(rank),started:performance.now()};
+  pendingPlayFx={rank:String(rank),handCount:(lastState&&lastState.hand?lastState.hand.filter(x=>cardValue(x)===String(rank)).length:0),started:performance.now()};
   $("hand").classList.add("locked");
   cardEl.classList.add("play-source");
   const clone=document.createElement("div");clone.className="card fx-flight-card";
@@ -1064,7 +1064,14 @@ function renderState(s){
   $("oppCount").textContent=s.opponentCount;
   const previousHandRects=new Map(previous&&$("hand")?[...$("hand").children].map(el=>[el.dataset.handKey,el.getBoundingClientRect()]):[]);
   const opponentIncreased=Boolean(previous&&s.opponentCount>previous.opponentCount);
-  $("opp").innerHTML=Array.from({length:s.opponentCount},(_,i)=>'<div class="card '+((!previous||opponentIncreased)&&i>=Math.max(0,s.opponentCount-(previous?Math.max(0,s.opponentCount-previous.opponentCount):s.opponentCount))?'draw-in':'')+'" style="--card-index:'+i+'" aria-hidden="true"><img class="back-card-art" src="/cards/card-back.svg" alt="" draggable="false"></div>').join("");
+  if(previous&&s.hand&&pendingPlayFx){
+    const newRankCount=s.hand.filter(x=>cardValue(x)===pendingPlayFx.rank).length;
+    if(newRankCount<pendingPlayFx.handCount){
+      pendingPlayFx=null;
+      $("hand").classList.remove("locked");
+    }
+  }
+  $("opp").innerHTML=Array.from({length:s.opponentCount},(_,i)=>'<div class="card '+(!previous&&i<s.opponentCount?'draw-in':'')+'" style="--card-index:'+i+'" aria-hidden="true"><img class="back-card-art" src="/cards/card-back.svg" alt="" draggable="false"></div>').join("");
 
   $("hand").innerHTML=s.hand.map((c,i)=>{
     const rank=cardValue(c);
@@ -1086,9 +1093,13 @@ function renderState(s){
       if(!animatePlayedCard(x,rank))return;
       setTimeout(()=>{
         if(!pendingPlayFx||pendingPlayFx.rank!==rank)return;
-        pendingPlayFx=null;
-        $("hand").classList.remove("locked");
         demoMode?advanceDemo():socket.emit("play_card",rank);
+        setTimeout(()=>{
+          if(pendingPlayFx&&pendingPlayFx.rank===rank){
+            pendingPlayFx=null;
+            $("hand").classList.remove("locked");
+          }
+        },2300);
       },575);
     };
     x.onkeydown=e=>{
@@ -1170,7 +1181,11 @@ $("take").onclick=()=>{
   socket.emit("take");
 };$("next").onclick=()=>{primeAudio();if(demoMode){advanceDemo();return}socket.emit("next_round")};
 socket.on("connect",()=>{setConnection("",false);lobbyReady();if(qaMode==="host"&&!qaJoinSent)setTimeout(()=>socket.emit("create_room"),120)});
-socket.on("disconnect",()=>{setConnection("Conexiunea a fost pierdută. Reîncercăm…",true);if(document.body.contains($("status"))) $("status").textContent="Reconectare la server…"});
+socket.on("disconnect",()=>{
+  setConnection("Conexiunea a fost pierdută. Reîncercăm…",true);
+  if(pendingPlayFx){pendingPlayFx=null;$("hand").classList.remove("locked")}
+  if(document.body.contains($("status"))) $("status").textContent="Reconectare la server…"
+});
 socket.on("connect_error",()=>setConnection("Nu ne putem conecta la server.",true));
 window.addEventListener("offline",()=>setConnection("Ești offline. Verificăm conexiunea…",true));
 window.addEventListener("online",()=>{if(socket.connected)setConnection("",false);else setConnection("Conexiunea revine…",true)});
