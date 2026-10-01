@@ -1164,7 +1164,7 @@ function renderState(s){
     collectionTimer=setTimeout(()=>{if(collectionToken===token){$("sequence").innerHTML=renderSequence(s.sequence);$("sequence").classList.remove("collecting-base","collection-hold");$("statusSub").textContent=""}},COLLECTION_HOLD_MS);
   }
 
-  const nextStatus=collecting?$("status").textContent:s.status==="waiting"?"Așteaptă adversarul.":s.status==="playing"?(ownTurn?"Este rândul tău.":"Așteaptă adversarul."):s.roundResult?.draw?"Egalitate — joc dublu.":s.status==="game_finished"?"Partida s-a terminat.":"Runda s-a terminat.";
+  const nextStatus=collecting?$("status").textContent:s.status==="waiting"?"Așteaptă adversarul.":s.status==="playing"?(ownTurn?"Este rândul tău.":"Rândul adversarului."):s.roundResult?.draw?"Egalitate — joc dublu.":s.status==="game_finished"?"Partida s-a terminat.":"Runda s-a terminat.";
   if($("status").textContent!==nextStatus){$("status").classList.remove("status-pop");void $("status").offsetWidth;$("status").classList.add("status-pop")}
   $("status").textContent=nextStatus;
   if(!collecting)$("statusSub").textContent=ownTurn?($("take").disabled?"Alege o carte.":"Alege o carte sau apasă IA-LE."): "";
