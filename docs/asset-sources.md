@@ -24,3 +24,9 @@ The current game engine only sends rank values to the client. The UI therefore s
 - **Repository:** https://github.com/AustinGabriel/Public-Domain-and-CC0-Playing-Cards
 - **Used files:** the illustrated Jack, Queen and King SVGs from the four suit folders.
 - **License statement:** the source repository README states that its assets are public domain / CC0 and that the deck includes ornate court-style face cards. The project uses those assets locally rather than hotlinking them.
+
+
+## Next-level card/table pass
+- The complete visible 32-card rank/suit set used by the current client renderer was refreshed from AustinGabriel/Public-Domain-and-CC0-Playing-Cards for a single cohesive illustrated deck style.
+- The 12 Jack/Queen/King SVGs are the source deck's full illustrated court faces, replacing the earlier simplified court variants.
+- The local `public/cards/card-back.svg` remains original Șeptică artwork and was rebuilt with layered borders, woven texture, and a central emblem for larger mobile presentation.

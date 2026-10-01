@@ -49,4 +49,4 @@ The face-card artwork uses the AustinGabriel public-domain/CC0 playing-card sour
 Source:
 https://github.com/AustinGabriel/Public-Domain-and-CC0-Playing-Cards
 
-The existing local numbered-card set and custom Șeptică back remain part of the project.
+The full 32-card playable set now uses the same illustrated source for A, 7, 8, 9, 10, J, Q and K across all four suits. The local Șeptică card back remains a custom project asset, redesigned with a physical paper/ink treatment.
