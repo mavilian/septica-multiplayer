@@ -137,6 +137,31 @@ s.on("take",()=>{
   }
 });
 s.on("next_round",()=>{const r=room(s);if(!r||s.data.player!==0)return;try{game.nextRound(r.state);log(r,`========== RUNDA ${r.state.round} ==========`);log(r,"A: 4 cărți | B: 4 cărți | Pachet: 24");log(r,r.state.turn===0?"A începe runda.":"B începe runda.");traceState(r,"DUPĂ RUNDA NOUĂ");broadcast(r)}catch(e){s.emit("error_message",e.message)}});
-s.on("disconnect",()=>{const r=room(s);if(!r)return;const p=s.data.player;r.players[p]=null;r.state.status="waiting";log(r,`${p?"B":"A"} s-a deconectat.`);r.players.forEach(id=>id&&io.to(id).emit("opponent_disconnected"));if(!r.players[0]&&!r.players[1])rooms.delete(r.code);else broadcast(r)})
+s.on("reconnect_room",raw=>{
+  if(s.data.room)return;
+  const c=String(raw?.code||"").trim().toUpperCase();
+  const p=Number(raw?.player);
+  const r=rooms.get(c);
+  if(!r||!(p===0||p===1))return s.emit("error_message","Camera nu mai este disponibilă.");
+  if(r.players[p]&&r.players[p]!==s.id)return s.emit("error_message","Locul jucătorului este ocupat.");
+  r.players[p]=s.id;
+  s.data.room=c;
+  s.data.player=p;
+  log(r,`${p?"B":"A"} s-a reconectat.`);
+  s.emit("room_rejoined",{code:c,player:p});
+  broadcast(r);
+});
+
+s.on("disconnect",()=>{
+  const r=room(s);
+  if(!r)return;
+  const p=s.data.player;
+  if(r.players[p]!==s.id)return;
+  r.players[p]=null;
+  log(r,`${p?"B":"A"} s-a deconectat.`);
+  r.players.forEach(id=>id&&io.to(id).emit("opponent_disconnected"));
+  if(!r.players[0]&&!r.players[1])rooms.delete(r.code);
+  else broadcast(r);
+})
 });
 server.listen(process.env.PORT||3000,"0.0.0.0",()=>console.log("Șeptică multiplayer v2 listening on http://0.0.0.0:3000"));
