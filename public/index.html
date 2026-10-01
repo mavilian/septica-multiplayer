@@ -830,7 +830,7 @@ function assetPath(card,index,items){
   return "/cards/"+rank+"_of_"+suits[same%4]+(["jack","queen","king"].includes(rank)?"_court":"")+".svg";
 }
 function cardMarkup(card,index,items){
-  return '<div class="card active-card" data-card="'+String(card).replaceAll('"','&quot;')+'"><img class="card-art" src="'+assetPath(card,index,items)+'" alt="'+String(card)+'" carte" draggable="false"></div>';
+  return '<div class="card active-card" data-card="'+String(card).replaceAll('"','&quot;')+'"><img class="card-art" src="'+assetPath(card,index,items)+'" alt="Carte '+String(card)+'" draggable="false"></div>';
 }
 function playable(s,card){
   if(s.status!=="playing"||s.turn!==s.player)return false;
