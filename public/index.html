@@ -662,6 +662,28 @@ body{padding:0;min-height:100dvh;background:radial-gradient(ellipse at 50% 35%,r
   .my-hand .card{--card-w:86px;margin-left:-24px}
 }
 </style>
+
+<style id="startup-reliability">
+/* Never make the real hand invisible while the authoritative state is already on screen. */
+.card.deal-in{
+  animation:dealInReliable .46s cubic-bezier(.18,.9,.22,1) both;
+  animation-delay:calc(var(--card-index,0) * 45ms);
+}
+@keyframes dealInReliable{
+  0%{opacity:1;transform:translate3d(0,18px,0) rotate(0deg) scale(.96)}
+  70%{opacity:1;transform:translate3d(0,-3px,0) rotate(0deg) scale(1.01)}
+  100%{opacity:1;transform:none}
+}
+.opponent-hand .card.deal-in{
+  animation-name:dealBackReliable;
+  animation-delay:calc(var(--card-index,0) * 35ms);
+}
+@keyframes dealBackReliable{
+  0%{opacity:1;transform:translate3d(0,-12px,0) rotate(0deg) scale(.96)}
+  70%{opacity:1;transform:translate3d(0,2px,0) rotate(0deg) scale(1.01)}
+  100%{opacity:1;transform:none}
+}
+</style>
 </head><body>
 <div id="connection" class="connection hidden"></div>
 <div id="fxLayer" class="fx-layer" aria-live="polite"></div>
@@ -1071,13 +1093,13 @@ function renderState(s){
       $("hand").classList.remove("locked");
     }
   }
-  $("opp").innerHTML=Array.from({length:s.opponentCount},(_,i)=>'<div class="card '+(!previous&&i<s.opponentCount?'draw-in':'')+'" style="--card-index:'+i+'" aria-hidden="true"><img class="back-card-art" src="/cards/card-back.svg" alt="" draggable="false"></div>').join("");
+  $("opp").innerHTML=Array.from({length:s.opponentCount},(_,i)=>'<div class="card '+((!previous&&i<s.opponentCount)?'deal-in':'')+'" style="--card-index:'+i+'" aria-hidden="true"><img class="back-card-art" src="/cards/card-back.svg" alt="" draggable="false"></div>').join("");
 
   $("hand").innerHTML=s.hand.map((c,i)=>{
     const rank=cardValue(c);
     const beforeCount=s.hand.slice(0,i).filter(x=>cardValue(x)===rank).length;
     const playable=cardPlayableForClient(s,rank);
-    const fresh=!previous;
+    const fresh=Boolean(previous&&previous.status==="playing"&&s.hand.length>previous.hand.length);
     const stateClass=playable?"active-card":"disabled";
     return '<div class="card '+stateClass+(fresh?' deal-in':'')+(ownTurn&&!playable?' blocked':'')+'" style="--card-index:'+i+'" data-c="'+rank+'" data-playable="'+(playable?'1':'0')+'" data-hand-key="'+rank+'-'+beforeCount+'" role="button" tabindex="'+(playable?'0':'-1')+'" aria-disabled="'+(!playable)+'" aria-label="Joacă cartea '+rank+'">'+cardFaceMarkup(c,i,s.hand)+'</div>';
   }).join("");
