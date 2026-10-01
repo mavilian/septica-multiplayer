@@ -804,7 +804,8 @@ body{padding:0;min-height:100dvh;background:radial-gradient(ellipse at 50% 35%,r
 <script src="/socket.io/socket.io.js"></script>
 <script>
 
-const BUILD="2026-10-01-mp-fix-01"; console.info("[Șeptică] build",BUILD);\nconst socket=io(),$=id=>document.getElementById(id);let me=0,lastState=null,audioCtx=null,pendingTakeFx=false;const urlParams=new URLSearchParams(location.search),demoMode=urlParams.get("demo")==="1",qaMode=urlParams.get("qa"),qaChannel=qaMode&&"BroadcastChannel"in window?new BroadcastChannel("septica-qa-v1"):null;let demoStep=0,qaJoinSent=false;
+const BUILD="2026-10-01-mp-fix-01"; console.info("[Șeptică] build",BUILD);
+const socket=io(),$=id=>document.getElementById(id);let me=0,lastState=null,audioCtx=null,pendingTakeFx=false;const urlParams=new URLSearchParams(location.search),demoMode=urlParams.get("demo")==="1",qaMode=urlParams.get("qa"),qaChannel=qaMode&&"BroadcastChannel"in window?new BroadcastChannel("septica-qa-v1"):null;let demoStep=0,qaJoinSent=false;
 function audio(){if(audioCtx)return audioCtx;try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();}catch{return null}return audioCtx}
 function tone(freq,duration=.07,type="sine",gain=.035,offset=0){const ctx=audio();if(!ctx)return;try{const now=ctx.currentTime+offset,o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.setValueAtTime(freq,now);g.gain.setValueAtTime(.0001,now);g.gain.exponentialRampToValueAtTime(gain,now+.008);g.gain.exponentialRampToValueAtTime(.0001,now+duration);o.connect(g);g.connect(ctx.destination);o.start(now);o.stop(now+duration+.02)}catch{}}
 function sound(kind){
@@ -1181,7 +1182,8 @@ function renderState(s){
   $("take").disabled=!(ownTurn&&s.sequence.length>=2);
   const showNext=["round_finished","round_draw","game_finished"].includes(s.status);
   $("next").classList.toggle("hidden",!showNext);$("next").disabled=s.player!==0;
-  $("log").textContent=s.log.join("\n");
+  $("log").textContent=s.log.join("
+");
   if(collecting){
     $("resultOverlay").classList.add("hidden");
     setTimeout(()=>{if(collectionToken===token)renderResult(s)},COLLECTION_HOLD_MS);
