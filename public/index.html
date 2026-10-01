@@ -804,7 +804,7 @@ body{padding:0;min-height:100dvh;background:radial-gradient(ellipse at 50% 35%,r
 <script src="/socket.io/socket.io.js"></script>
 <script>
 
-const BUILD="2026-10-01-mp-fix-01"; console.info("[Șeptică] build",BUILD);
+const BUILD="2026-10-01-mp-fix-02"; console.info("[Șeptică] build",BUILD);
 const socket=io(),$=id=>document.getElementById(id);let me=0,lastState=null,audioCtx=null,pendingTakeFx=false;const urlParams=new URLSearchParams(location.search),demoMode=urlParams.get("demo")==="1",qaMode=urlParams.get("qa"),qaChannel=qaMode&&"BroadcastChannel"in window?new BroadcastChannel("septica-qa-v1"):null;let demoStep=0,qaJoinSent=false;
 function audio(){if(audioCtx)return audioCtx;try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();}catch{return null}return audioCtx}
 function tone(freq,duration=.07,type="sine",gain=.035,offset=0){const ctx=audio();if(!ctx)return;try{const now=ctx.currentTime+offset,o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.setValueAtTime(freq,now);g.gain.setValueAtTime(.0001,now);g.gain.exponentialRampToValueAtTime(gain,now+.008);g.gain.exponentialRampToValueAtTime(.0001,now+duration);o.connect(g);g.connect(ctx.destination);o.start(now);o.stop(now+duration+.02)}catch{}}
@@ -889,7 +889,7 @@ function updateTurnRibbon(s,ownTurn,collecting){
   const active=ownTurn&&!collecting;
   ribbon.classList.toggle("active",active);
   ribbon.classList.toggle("waiting",!active);
-  label.textContent=collecting?"Se strâng cărțile":ownTurn?"Rândul tău":opponentTurn?"Rândul adversarului":s.status==="waiting"?(s.players?.[1-s.player]?"Așteaptă adversarul":"Adversarul se reconectează…"):"Runda s-a încheiat";
+  label.textContent=collecting?"Se strâng cărțile":ownTurn?"Rândul tău":opponentTurn?"Rândul adversarului":s.status==="waiting"?"Așteaptă adversarul":"Runda s-a încheiat";
 }
 function popValue(id){
   const el=$(id);if(!el)return;
@@ -1165,7 +1165,7 @@ function renderState(s){
     collectionTimer=setTimeout(()=>{if(collectionToken===token){$("sequence").innerHTML=renderSequence(s.sequence);$("sequence").classList.remove("collecting-base","collection-hold");$("statusSub").textContent=""}},COLLECTION_HOLD_MS);
   }
 
-  const nextStatus=collecting?$("status").textContent:s.status==="waiting"?(s.players?.[1-s.player]?"Așteaptă adversarul.":"Adversarul se reconectează…"):s.status==="playing"?(!s.players?.[0]||!s.players?.[1]?"Adversarul se reconectează…":(ownTurn?"Este rândul tău.":"Rândul adversarului.")):s.roundResult?.draw?"Egalitate — joc dublu.":s.status==="game_finished"?"Partida s-a terminat.":"Runda s-a terminat.";
+  const nextStatus=collecting?$("status").textContent:s.status==="waiting"?"Așteaptă adversarul.":s.status==="playing"?(!s.players?.[0]||!s.players?.[1]?"Adversarul se reconectează…":(ownTurn?"Este rândul tău.":"Rândul adversarului.")):s.roundResult?.draw?"Egalitate — joc dublu.":s.status==="game_finished"?"Partida s-a terminat.":"Runda s-a terminat.";
   if($("status").textContent!==nextStatus){$("status").classList.remove("status-pop");void $("status").offsetWidth;$("status").classList.add("status-pop")}
   $("status").textContent=nextStatus;
   if(!collecting)$("statusSub").textContent=ownTurn?($("take").disabled?"Alege o carte.":"Alege o carte sau apasă IA-LE."): "";
@@ -1182,8 +1182,7 @@ function renderState(s){
   $("take").disabled=!(ownTurn&&s.sequence.length>=2);
   const showNext=["round_finished","round_draw","game_finished"].includes(s.status);
   $("next").classList.toggle("hidden",!showNext);$("next").disabled=s.player!==0;
-  $("log").textContent=s.log.join("
-");
+  $("log").textContent=s.log.join("\n");
   if(collecting){
     $("resultOverlay").classList.add("hidden");
     setTimeout(()=>{if(collectionToken===token)renderResult(s)},COLLECTION_HOLD_MS);
@@ -1211,7 +1210,7 @@ $("take").onclick=()=>{
   setTimeout(()=>{pendingTakeFx=false},2300);
   socket.emit("take");
 };$("next").onclick=()=>{primeAudio();if(demoMode){advanceDemo();return}socket.emit("next_round")};
-socket.on("connect",()=>{setConnection("",false);lobbyReady();const saved=sessionStorage.getItem("septica-room");if(!demoMode&&saved){try{const d=JSON.parse(saved);if(d?.code&&(d.player===0||d.player===1)){socket.emit("reconnect_room",d);return}}catch{}}if(qaMode==="host"&&!qaJoinSent)setTimeout(()=>socket.emit("create_room"),120)});
+socket.on("connect",()=>{setConnection("",false);lobbyReady();const saved=sessionStorage.getItem("septica-room");if(!demoMode&&saved){try{const d=JSON.parse(saved);if(d?.code&&(d.player===0||d.player===1)){socket.emit("reconnect_room",d);return}}catch{sessionStorage.removeItem("septica-room")}}if(qaMode==="host"&&!qaJoinSent)setTimeout(()=>socket.emit("create_room"),120)});
 socket.on("disconnect",()=>{
   setConnection("Conexiunea a fost pierdută. Reîncercăm…",true);
   if(pendingPlayFx){pendingPlayFx=null;$("hand").classList.remove("locked")}
