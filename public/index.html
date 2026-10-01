@@ -801,436 +801,142 @@ body{padding:0;min-height:100dvh;background:radial-gradient(ellipse at 50% 35%,r
   </div>
 </section>
 
-<script>
-
-const BUILD="2026-10-01-mp-fix-02"; console.info("[Șeptică] build",BUILD);
-const $=id=>document.getElementById(id); let me=0,lastState=null,audioCtx=null,pendingTakeFx=false,pollTimer=0,pollBusy=false;const urlParams=new URLSearchParams(location.search),demoMode=urlParams.get("demo")==="1",qaMode=urlParams.get("qa"),qaChannel=qaMode&&"BroadcastChannel"in window?new BroadcastChannel("septica-qa-v1"):null;let demoStep=0,qaJoinSent=false;
-function audio(){if(audioCtx)return audioCtx;try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();}catch{return null}return audioCtx}
-function tone(freq,duration=.07,type="sine",gain=.035,offset=0){const ctx=audio();if(!ctx)return;try{const now=ctx.currentTime+offset,o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.setValueAtTime(freq,now);g.gain.setValueAtTime(.0001,now);g.gain.exponentialRampToValueAtTime(gain,now+.008);g.gain.exponentialRampToValueAtTime(.0001,now+duration);o.connect(g);g.connect(ctx.destination);o.start(now);o.stop(now+duration+.02)}catch{}}
-function sound(kind){
-  if(kind==="turn"){tone(660,.08,"sine",.03);tone(880,.11,"sine",.025,.07)}
-  else if(kind==="card"){tone(390,.045,"triangle",.022)}
-  else if(kind==="land"){tone(520,.035,"triangle",.018);tone(320,.055,"triangle",.014,.025)}
-  else if(kind==="take"){tone(240,.08,"square",.024);tone(180,.10,"square",.018,.07);tone(280,.06,"triangle",.012,.16)}
-  else if(kind==="collect"){tone(330,.05,"triangle",.016);tone(220,.07,"triangle",.012,.045)}
-  else if(kind==="finish"){tone(523,.11,"sine",.03);tone(659,.12,"sine",.026,.09);tone(784,.16,"sine",.022,.19)}
-}
-function toast(text,kind=""){const n=document.createElement("div");n.className="fx-toast"+(kind?" "+kind:"");n.textContent=text;$("fxLayer").appendChild(n);setTimeout(()=>n.remove(),900)}
-function primeAudio(){const ctx=audio();if(ctx&&ctx.state==="suspended")ctx.resume().catch(()=>{})}
-document.addEventListener("pointerdown",primeAudio,{once:true});
-
-const demoBase={
-  room:"DEMO1",player:0,players:[true,true],status:"playing",round:3,game:1,
-  small:[1,0],big:[0,0],roundDouble:false,roundResult:null,gameResult:null,deck:18,
-  hand:["10","7","K","A"],opponentCount:4,sequence:[],turn:0,
-  pileCounts:[3,4],pilePoints:[1,2],log:["Previzualizare UI locală.","Nu este conectat la o partidă reală."]
-};
-function qaJoinFromMessage(ev){
-  if(qaMode!=="guest"||qaJoinSent||!ev?.data||ev.data.type!=="septica-qa-room"||!ev.data.code)return;
-  qaJoinSent=true;
-  $("roomCode").value=String(ev.data.code).toUpperCase();
-  socket.emit("join_room",$("roomCode").value);
-}
-if(qaChannel)qaChannel.addEventListener("message",qaJoinFromMessage);
-
-function demoState(step){
-  const s=structuredClone(demoBase);
-  if(step>=1){s.sequence=["10"];s.hand=["7","K","A"];s.turn=0;s.deck=17}
-  if(step>=2){s.sequence=["10","10"];s.hand=["7","K","A"];s.turn=0;s.deck=16}
-  if(step>=3){s.sequence=["10","10","7"];s.hand=["K","A"];s.turn=0;s.deck=15}
-  if(step>=4){s.sequence=[];s.hand=["K","A","9","Q"];s.pileCounts=[3,7];s.pilePoints=[1,4];s.deck=15;s.turn=0}
-  if(step>=5){s.sequence=["Q"];s.hand=["K","A","9"];s.turn=0;s.deck=14}
-  return s;
-}
-function renderDemo(){
-  $("demoBadge").classList.remove("hidden");
-  show();
-  renderState(demoState(demoStep));
-}
-function advanceDemo(){
-  primeAudio();
-  demoStep=demoStep>=5?0:demoStep+1;
-  if(demoStep===4){sound("take");toast("Secvență colectată","gold")}
-  renderDemo();
-}
+const BUILD="polling-2026-10-01";
+const $=id=>document.getElementById(id);
+let me=null,lastState=null,pollTimer=null,qaChannel=null;
+const demoMode=new URLSearchParams(location.search).get("demo")==="1";
+const qaMode=new URLSearchParams(location.search).get("qa");
 
 function show(){ $("lobby").classList.add("hidden"); $("game").classList.remove("hidden"); }
-function setConnection(text,visible){ $("connection").textContent=text; $("connection").classList.toggle("hidden",!visible); }
-function lobbyReady(){ $("lobbyState").textContent="Alege: creează o cameră sau introdu codul adversarului."; }
-function joinRoom(){ $("roomCode").value=$("roomCode").value.toUpperCase().trim(); socket.emit("join_room",$("roomCode").value); }
-function suitClass(suit){
-  return ["hearts","diamonds"].includes(String(suit))?"red":"black";
+function setMessage(t){ $("message").textContent=t||""; }
+function roomData(){ try{return JSON.parse(sessionStorage.getItem("septica-room")||"null")}catch{return null} }
+function saveRoom(code,player){ sessionStorage.setItem("septica-room",JSON.stringify({code,player})); }
+
+async function api(path,options){
+  const res=await fetch(path,{cache:"no-store",headers:{"Content-Type":"application/json"},...options});
+  const data=await res.json().catch(()=>({}));
+  if(!res.ok)throw new Error(data.error||("HTTP "+res.status));
+  return data;
 }
-function visualSuit(card,index,items=[]){
-  const raw=typeof card==="object"&&card?String(card.suit||""):"";
-  if(raw){const map={"S":"spades","SPADES":"spades","♠":"spades","H":"hearts","HEARTS":"hearts","♥":"hearts","D":"diamonds","DIAMONDS":"diamonds","♦":"diamonds","C":"clubs","CLUBS":"clubs","♣":"clubs"};return map[raw.toUpperCase()]||raw}
-  const rank=String(typeof card==="object"&&card?card.rank:card);
-  const occurrence=items.slice(0,index).filter(x=>String(typeof x==="object"&&x?x.rank:x)===rank).length;
-  return ["spades","hearts","diamonds","clubs"][occurrence%4];
-}
+
 function assetRank(card){
-  const rank=String(typeof card==="object"&&card?card.rank:card);
-  return rank==="A"?"ace":rank==="J"?"jack":rank==="Q"?"queen":rank==="K"?"king":rank;
+  const r=String(card);
+  return r==="A"?"ace":r==="J"?"jack":r==="Q"?"queen":r==="K"?"king":r;
 }
-function cardAssetPath(card,index,items=[]){
-  const rank=assetRank(card),suit=visualSuit(card,index,items); return "/cards/"+rank+"_of_"+suit+(["jack","queen","king"].includes(rank)?"_court":"")+".svg";
+function assetPath(card,index,items){
+  const rank=assetRank(card);
+  const same=items.slice(0,index).filter(x=>String(x)===String(card)).length;
+  const suits=["spades","hearts","diamonds","clubs"];
+  return "/cards/"+rank+"_of_"+suits[same%4]+(["jack","queen","king"].includes(rank)?"_court":"")+".svg";
 }
-function cardFaceMarkup(card,index,items=[]){
-  const rank=String(typeof card==="object"&&card?card.rank:card);
-  return '<img class="card-art" src="'+cardAssetPath(card,index,items)+'" alt="'+rank+' carte" draggable="false">';
+function cardMarkup(card,index,items){
+  return '<div class="card active-card" data-card="'+String(card).replaceAll('"','&quot;')+'"><img class="card-art" src="'+assetPath(card,index,items)+'" alt="'+String(card)+'" carte" draggable="false"></div>';
 }
-
-
-function updateTurnRibbon(s,ownTurn,collecting){
-  const ribbon=$("turnRibbon"),label=$("turnRibbonText");
-  if(!ribbon||!label)return;
-  const opponentTurn=s.status==="playing"&&s.players?.[0]&&s.players?.[1]&&s.turn===1-s.player;
-  const active=ownTurn&&!collecting;
-  ribbon.classList.toggle("active",active);
-  ribbon.classList.toggle("waiting",!active);
-  label.textContent=collecting?"Se strâng cărțile":ownTurn?"Rândul tău":opponentTurn?"Rândul adversarului":s.status==="waiting"?"Așteaptă adversarul":"Runda s-a încheiat";
-}
-function popValue(id){
-  const el=$(id);if(!el)return;
-  el.classList.remove("value-pop");void el.offsetWidth;el.classList.add("value-pop");
-  setTimeout(()=>el.classList.remove("value-pop"),430);
-}
-
-function renderResult(s){
-  const finished=["round_finished","round_draw","game_finished"].includes(s.status);
-  $("resultOverlay").classList.toggle("hidden",!finished);
-  if(!finished||!s.roundResult)return;
-  const q=s.roundResult;
-  $("resultKicker").textContent=s.status==="game_finished"?"Final de partidă":"Final de rundă";
-  $("resultTitle").textContent=q.draw?"Egalitate":s.status==="game_finished"?"Partida s-a terminat":q.winner===s.player?"Runda ta":"Runda adversarului";
-  $("resultScore").textContent="A "+q.points[0]+" – "+q.points[1]+" B";
-  $("resultNote").textContent=q.draw?"Joc dublu.":q.septica?"Șeptică: +2 la rundă.":q.double?"Runda dublată.":"Punctele au fost acordate la finalul rundei.";
-  const canNext=s.player===0;
-  $("resultNext").classList.toggle("hidden",!canNext);
-  $("resultNext").disabled=!canNext;
-}
-const COLLECTION_HOLD_MS=3000;let collectionTimer=0,collectionToken=0;
-function cardValue(card){return String(typeof card==="object"&&card?card.rank:card)}
-function sequenceStarter(s){
-  if(!s||!s.sequence||!s.sequence.length||!Number.isInteger(s.turn))return null;
-  return s.sequence.length%2===0?s.turn:1-s.turn;
-}
-function cardPlayableForClient(s,card){
-  if(!s||s.status!=="playing"||s.turn!==s.player)return false;
+function playable(s,card){
+  if(s.status!=="playing"||s.turn!==s.player)return false;
   if(s.sequence.length<2)return true;
-  const starter=sequenceStarter(s);
-  return starter===s.player ? String(card)===String(s.sequence[0])||String(card)==="7" : true;
-}
-function renderSequence(seq){
-  if(!seq.length)return '<span class="empty">Nicio secvență activă</span>';
-  return seq.map((c,i)=>'<div class="seq '+suitClass(visualSuit(c,i,seq))+(i===seq.length-1?' fresh':'')+'" data-seq-index="'+i+'">'+cardFaceMarkup(c,i,seq)+'</div>').join('');
-}
-function fxRemove(el,delay=0){setTimeout(()=>{if(el&&el.parentNode)el.remove()},delay)}
-function makeImpact(x,y){const n=document.createElement("div");n.className="fx-impact";n.style.left=x+"px";n.style.top=y+"px";$("fxLayer").appendChild(n);fxRemove(n,520)}
-function findSequenceTargetRect(){
-  const seq=$("sequence");if(!seq)return null;
-  const ghost=document.createElement("div");
-  ghost.className="seq";
-  ghost.style.position="absolute";
-  ghost.style.left="50%";
-  ghost.style.top="50%";
-  ghost.style.transform="translate(-50%,-50%)";
-  ghost.style.visibility="hidden";
-  ghost.style.pointerEvents="none";
-  ghost.innerHTML="";
-  seq.appendChild(ghost);
-  const rect=ghost.getBoundingClientRect();
-  ghost.remove();
-  return rect;
-}
-function animatePlayedCard(cardEl,rank){
-  const art=cardEl&&cardEl.querySelector(".card-art"),target=$("sequence");
-  if(!art||!target||pendingPlayFx)return false;
-  const a=art.getBoundingClientRect(),t=findSequenceTargetRect();if(!t)return false;
-  pendingPlayFx={rank:String(rank),handCount:(lastState&&lastState.hand?lastState.hand.filter(x=>cardValue(x)===String(rank)).length:0),started:performance.now()};
-  $("hand").classList.add("locked");
-  cardEl.classList.add("play-source");
-  const clone=document.createElement("div");clone.className="card fx-flight-card";
-  clone.style.left=a.left+"px";clone.style.top=a.top+"px";clone.style.width=a.width+"px";clone.style.height=a.height+"px";
-  const face=art.cloneNode(true);face.className="card-art";clone.appendChild(face);$("fxLayer").appendChild(clone);
-  const dx=t.left+t.width/2-(a.left+a.width/2),dy=t.top+t.height/2-(a.top+a.height/2);
-  clone.animate([
-    {transform:"translate3d(0,0,0) rotate(0deg) rotateY(0deg) scale(1)",opacity:1},
-    {transform:"translate3d("+(dx*.30)+"px,"+(dy*.18-18)+"px,0) rotate(-5deg) rotateY(-7deg) scale(1.02)",opacity:1,offset:.25},
-    {transform:"translate3d("+(dx*.72)+"px,"+(dy*.68-6)+"px,0) rotate(2deg) rotateY(3deg) scale(.91)",opacity:1,offset:.70},
-    {transform:"translate3d("+dx+"px,"+dy+"px,0) rotate(-1deg) rotateY(0deg) scale(.86)",opacity:.99}
-  ],{duration:620,easing:"cubic-bezier(.12,.94,.16,1)",fill:"forwards"}).finished.then(()=>{
-    makeImpact(t.left+t.width/2,t.top+t.height/2);sound("land");fxRemove(clone,20);
-  }).catch(()=>fxRemove(clone));
+  if(s.starter===s.player)return String(card)===String(s.sequence[0])||String(card)==="7";
   return true;
 }
-function pulseDeck(){
-  const deck=document.querySelector(".deck-stack");
-  if(!deck)return;
-  deck.classList.remove("dealing");void deck.offsetWidth;deck.classList.add("dealing");
-  setTimeout(()=>deck.classList.remove("dealing"),520);
-}
-function flashAt(x,y){
-  const n=document.createElement("div");n.className="card-shine";n.style.left=x+"px";n.style.top=y+"px";$("fxLayer").appendChild(n);fxRemove(n,460);
-}
-function animateDrawToHand(previousHand,newHand){
-  if(!previousHand||previousHand.length>=newHand.length)return;
-  const deckNode=document.querySelector(".deck-stack span:last-child"),hand=$("hand");
-  if(!deckNode||!hand)return;
-  const deckRect=deckNode.getBoundingClientRect();pulseDeck();
-  const added=[];const counts={};
-  previousHand.forEach(c=>{const k=cardValue(c);counts[k]=(counts[k]||0)+1});
-  newHand.forEach((c,i)=>{const k=cardValue(c);counts[k]=(counts[k]||0)-1;if(counts[k]<0)added.push(i)});
-  added.forEach((idx,n)=>{
-    const target=hand.children[idx];if(!target)return;
-    const tr=target.getBoundingClientRect();target.classList.add("draw-target");
-    const shell=document.createElement("div");shell.className="card fx-flight-card";shell.style.left=deckRect.left+"px";shell.style.top=deckRect.top+"px";shell.style.width=deckRect.width+"px";shell.style.height=deckRect.height+"px";
-    const art=document.createElement("img");art.className="card-art";art.src="/cards/card-back.svg";art.alt="";art.draggable=false;shell.appendChild(art);$("fxLayer").appendChild(shell);
-    const dx=tr.left+tr.width/2-(deckRect.left+deckRect.width/2),dy=tr.top+tr.height/2-(deckRect.top+deckRect.height/2);
-    const face=cardAssetPath(newHand[idx],idx,newHand),flipAt=setTimeout(()=>{art.src=face;flashAt(tr.left+tr.width*.55,tr.top+tr.height*.46)},245+n*45);
-    shell.animate([
-      {transform:"translate3d(0,0,0) rotate(0deg) scale(1)",opacity:1},
-      {transform:"translate3d("+(dx*.40)+"px,"+(dy*.22-20)+"px,0) rotate("+(n%2?-5:5)+"deg) scale(.94)",opacity:1,offset:.40},
-      {transform:"translate3d("+(dx*.78)+"px,"+(dy*.72)+"px,0) rotate("+(n%2?2:-2)+"deg) scale(.84)",opacity:1,offset:.76},
-      {transform:"translate3d("+dx+"px,"+dy+"px,0) rotate(0deg) scale("+Math.min(.88,tr.width/deckRect.width)+")",opacity:.98}
-    ],{duration:510,easing:"cubic-bezier(.12,.92,.16,1)",delay:n*72,fill:"forwards"}).finished.then(()=>{
-      clearTimeout(flipAt);target.classList.remove("draw-target");target.classList.add("draw-arrival");setTimeout(()=>target.classList.remove("draw-arrival"),260);fxRemove(shell,30);sound("land");
-    }).catch(()=>{clearTimeout(flipAt);target.classList.remove("draw-target");fxRemove(shell)});
-  });
-  if(added.length){$("deckVisual").classList.remove("draw-flash");void $("deckVisual").offsetWidth;$("deckVisual").classList.add("draw-flash")}
-}
-function animateHandReflow(previousRects){
-  if(!previousRects||!previousRects.size)return;
-  const hand=$("hand");[...hand.children].forEach(el=>{
-    const key=el.dataset.handKey,old=previousRects.get(key);if(!old)return;
-    const r=el.getBoundingClientRect(),dx=old.left-r.left,dy=old.top-r.top;
-    if(Math.abs(dx)<1&&Math.abs(dy)<1)return;
-    el.classList.add("hand-reflow");
-    el.animate([{transform:"translate3d("+dx+"px,"+dy+"px,0) rotate(var(--fan,0deg))"},{transform:"translate3d(0,0,0) rotate(var(--fan,0deg))"}],{duration:320,easing:"cubic-bezier(.18,.9,.2,1)",fill:"forwards"}).finished.then(()=>el.classList.remove("hand-reflow")).catch(()=>el.classList.remove("hand-reflow"));
-  });
-}
-function animateOpponentDraw(previousCount,newCount){
-  if(previousCount===null||newCount<=previousCount)return;
-  const deckNode=document.querySelector(".deck-stack span:last-child"),opp=$("opp");if(!deckNode||!opp)return;
-  const deckRect=deckNode.getBoundingClientRect(),added=newCount-previousCount;pulseDeck();
-  [...opp.children].slice(-added).forEach((target,n)=>{
-    const tr=target.getBoundingClientRect();target.style.opacity="0";const shell=document.createElement("div");shell.className="card fx-flight-card";shell.style.left=deckRect.left+"px";shell.style.top=deckRect.top+"px";shell.style.width=deckRect.width+"px";shell.style.height=deckRect.height+"px";
-    const art=document.createElement("img");art.className="card-art";art.src="/cards/card-back.svg";art.alt="";art.draggable=false;shell.appendChild(art);$("fxLayer").appendChild(shell);
-    const dx=tr.left+tr.width/2-(deckRect.left+deckRect.width/2),dy=tr.top+tr.height/2-(deckRect.top+deckRect.height/2);
-    shell.animate([{transform:"translate3d(0,0,0) rotate(0deg) scale(1)",opacity:1},{transform:"translate3d("+dx+"px,"+dy+"px,0) rotate("+(n%2?-4:4)+"deg) scale(.58)",opacity:1}],{duration:430,easing:"cubic-bezier(.14,.9,.17,1)",delay:n*60,fill:"forwards"}).finished.then(()=>{target.style.opacity="1";fxRemove(shell,25)}).catch(()=>{target.style.opacity="1";fxRemove(shell)});
-  });
-}
 
-function animateOpponentReveal(card,index,items,targetNode){
-  const source=document.querySelector(".deck-stack span:last-child"),target=$("sequence");if(!source||!target)return;
-  const a=source.getBoundingClientRect(),t=target.getBoundingClientRect(),wrap=document.createElement("div");wrap.className="card fx-flight-wrap";wrap.style.left=a.left+"px";wrap.style.top=a.top+"px";wrap.style.width=a.width+"px";wrap.style.height=a.height+"px";
-  const back=document.createElement("img");back.className="card-art";back.src="/cards/card-back.svg";back.alt="";back.draggable=false;wrap.appendChild(back);$("fxLayer").appendChild(wrap);
-  if(targetNode)targetNode.style.opacity="0";
-  const dx=t.left+t.width/2-(a.left+a.width/2),dy=t.top+t.height/2-(a.top+a.height/2);let swapped=false;
-  const animation=wrap.animate([
-    {transform:"translate3d(0,0,0) rotate(0deg) rotateY(0deg) scale(1)",opacity:1},
-    {transform:"translate3d("+(dx*.46)+"px,"+(dy*.44-22)+"px,0) rotate(-5deg) rotateY(82deg) scale(.88)",opacity:1,offset:.48},
-    {transform:"translate3d("+dx+"px,"+dy+"px,0) rotate(1deg) rotateY(0deg) scale(.78)",opacity:.98}
-  ],{duration:570,easing:"cubic-bezier(.12,.93,.16,1)",fill:"forwards"});
-  const flipTimer=setTimeout(()=>{if(!swapped){swapped=true;back.src=cardAssetPath(card,index,items)}},245);
-  animation.finished.then(()=>{clearTimeout(flipTimer);if(targetNode){targetNode.style.opacity="1";targetNode.classList.add("draw-arrival");setTimeout(()=>targetNode.classList.remove("draw-arrival"),260)}makeImpact(t.left+t.width/2,t.top+t.height/2);sound("land");fxRemove(wrap,80)}).catch(()=>{clearTimeout(flipTimer);if(targetNode)targetNode.style.opacity="1";fxRemove(wrap)});
-}
-function animateCollection(seq,winner){
-  const container=$("sequence"),nodes=[...container.querySelectorAll(".seq")],target=winner===0?$("pileAVisual"):winner===1?$("pileBVisual"):null;if(!target||!nodes.length)return;
-  const tr=target.getBoundingClientRect(),tx=tr.left+tr.width/2,ty=tr.top+tr.height/2;
-  const glow=document.createElement("div");glow.className="collection-glow";glow.style.left=tx+"px";glow.style.top=ty+"px";$("fxLayer").appendChild(glow);fxRemove(glow,980);
-  nodes.forEach((node,i)=>{
-    const art=node.querySelector(".card-art");if(!art)return;
-    const r=art.getBoundingClientRect(),clone=document.createElement("div");clone.className="card fx-collect-card";clone.style.left=r.left+"px";clone.style.top=r.top+"px";clone.style.width=r.width+"px";clone.style.height=r.height+"px";
-    const face=art.cloneNode(true);face.className="card-art";clone.appendChild(face);$("fxLayer").appendChild(clone);
-    const dx=tx-(r.left+r.width/2),dy=ty-(r.top+r.height/2),scale=Math.min(.48,Math.max(.38,Math.min(48/r.width,64/r.height))),side=i%2?-1:1;
-    const arcX=dx*.34+side*16,arcY=dy*.22-18;
-    clone.animate([
-      {transform:"translate3d(0,0,0) rotate(0deg) scale(1)",opacity:1},
-      {transform:"translate3d("+arcX+"px,"+arcY+"px,0) rotate("+(side*5)+"deg) scale(.93)",opacity:1,offset:.27},
-      {transform:"translate3d("+(dx*.72)+"px,"+(dy*.62)+"px,0) rotate("+(side*11)+"deg) scale(.70)",opacity:1,offset:.72},
-      {transform:"translate3d("+dx+"px,"+dy+"px,0) rotate("+(side*18)+"deg) scale("+scale+")",opacity:.02}
-    ],{duration:1850,easing:"cubic-bezier(.12,.92,.16,1)",delay:i*95,fill:"forwards"}).finished.then(()=>fxRemove(clone,25)).catch(()=>fxRemove(clone));
-  });
-  sound("collect");
-}
-function animateTakeFromTable(winner){
-  const seq=$("sequence");if(!seq)return;
-  animateCollection([...seq.querySelectorAll(".seq")].map(x=>x),winner);
-}
-function updateScoreLabels(s){
-  const you=s.small[s.player],opp=s.small[1-s.player];
-  $("smallYou").textContent=you;$("smallOpp").textContent=opp;
-  $("scoreLeftLabel").textContent="TU";$("scoreRightLabel").textContent="ADVERSAR";
-  $("officialRoundScore").textContent="A "+s.small[0]+" – "+s.small[1]+" B";
-  $("gameScore").textContent="A "+s.big[0]+" – "+s.big[1]+" B";
-}
 function renderState(s){
-  const previous=lastState;
-  const ownTurn=s.status==="playing"&&s.players?.[0]&&s.players?.[1]&&s.turn===s.player;
-  const aDelta=s.pileCounts[0]-((previous&&previous.pileCounts&&previous.pileCounts[0])||0);
-  const bDelta=s.pileCounts[1]-((previous&&previous.pileCounts&&previous.pileCounts[1])||0);
-  const collecting=Boolean(previous&&previous.sequence&&previous.sequence.length&&!s.sequence.length);
-  const winner= aDelta>0 ? 0 : bDelta>0 ? 1 : null;
-  const token=++collectionToken;
-
-  if(previous){
-    const becameMyTurn=ownTurn&&!(previous.status==="playing"&&previous.turn===previous.player);
-    const cardAdded=s.sequence.length>previous.sequence.length;
-    const finished=["round_finished","round_draw","game_finished"].includes(s.status)&&!["round_finished","round_draw","game_finished"].includes(previous.status);
-    if(becameMyTurn){primeAudio();sound("turn");toast("Este rândul tău","gold")}
-    else if(cardAdded){primeAudio();sound("card")}
-    else if(finished){primeAudio();sound("finish")}
-  }
-
   lastState=s;show();
-  $("code").textContent=s.room;$("me").textContent=s.player?"B":"A";$("round").textContent=s.round;
-  $("oppAvatar").textContent=s.player?"A":"B";$("oppRole").textContent=s.player?"Jucător A":"Jucător B";$("selfAvatar").textContent=s.player?"B":"A";$("selfRole").textContent=s.player?"Jucător B":"Jucător A";
-  $("deck").textContent=s.deck;$("deckVisual").textContent=s.deck;
-  const scoreChanged=Boolean(previous&&(previous.small[0]!==s.small[0]||previous.small[1]!==s.small[1]||previous.big[0]!==s.big[0]||previous.big[1]!==s.big[1]));
-  updateScoreLabels(s);
-  if(scoreChanged){$("score-card").classList.remove("score-change");void $("score-card").offsetWidth;$("score-card").classList.add("score-change")}
+  $("code").textContent=s.room;
+  $("me").textContent=s.player?"B":"A";
+  $("round").textContent=s.round;
+  $("oppAvatar").textContent=s.player?"A":"B";
+  $("oppRole").textContent=s.player?"Jucător A":"Jucător B";
+  $("selfAvatar").textContent=s.player?"B":"A";
+  $("selfRole").textContent=s.player?"Jucător B":"Jucător A";
+  $("smallYou").textContent=s.small[s.player];
+  $("smallOpp").textContent=s.small[1-s.player];
+  $("gameScore").textContent="A "+s.big[0]+" – "+s.big[1]+" B";
+  $("deck").textContent=s.deck; $("deckVisual").textContent=s.deck;
   $("oppCount").textContent=s.opponentCount;
-  const previousHandRects=new Map(previous&&$("hand")?[...$("hand").children].map(el=>[el.dataset.handKey,el.getBoundingClientRect()]):[]);
-  const opponentIncreased=Boolean(previous&&s.opponentCount>previous.opponentCount);
-  if(previous&&s.hand&&pendingPlayFx){
-    const newRankCount=s.hand.filter(x=>cardValue(x)===pendingPlayFx.rank).length;
-    if(newRankCount<pendingPlayFx.handCount){
-      pendingPlayFx=null;
-      $("hand").classList.remove("locked");
-    }
-  }
-  $("opp").innerHTML=Array.from({length:s.opponentCount},(_,i)=>'<div class="card" style="--card-index:'+i+'" aria-hidden="true"><img class="back-card-art" src="/cards/card-back.svg" alt="" draggable="false"></div>').join("");
-
-  $("hand").innerHTML=s.hand.map((c,i)=>{
-    const rank=cardValue(c);
-    const beforeCount=s.hand.slice(0,i).filter(x=>cardValue(x)===rank).length;
-    const playable=cardPlayableForClient(s,rank);
-    const fresh=false;
-    const stateClass=playable?"active-card":"disabled";
-    return '<div class="card '+stateClass+(fresh?' deal-in':'')+(ownTurn&&!playable?' blocked':'')+'" style="--card-index:'+i+'" data-c="'+rank+'" data-playable="'+(playable?'1':'0')+'" data-hand-key="'+rank+'-'+beforeCount+'" role="button" tabindex="'+(playable?'0':'-1')+'" aria-disabled="'+(!playable)+'" aria-label="Joacă cartea '+rank+'">'+cardFaceMarkup(c,i,s.hand)+'</div>';
-  }).join("");
-
-  [...$("hand").children].forEach(x=>{
-    x.addEventListener("pointerdown",()=>{if(x.dataset.playable==="1")x.classList.add("pressing")},{passive:true});
-    x.addEventListener("pointerup",()=>x.classList.remove("pressing"),{passive:true});
-    x.addEventListener("pointercancel",()=>x.classList.remove("pressing"),{passive:true});
-    x.onclick=()=>{
-      if(!ownTurn||x.dataset.playable!=="1"||pendingPlayFx)return;
-      primeAudio();
-      const rank=x.dataset.c;
-      if(!animatePlayedCard(x,rank))return;
-      setTimeout(()=>{
-        if(!pendingPlayFx||pendingPlayFx.rank!==rank)return;
-        demoMode?advanceDemo():socket.emit("play_card",rank);
-        setTimeout(()=>{
-          if(pendingPlayFx&&pendingPlayFx.rank===rank){
-            pendingPlayFx=null;
-            $("hand").classList.remove("locked");
-          }
-        },2300);
-      },635);
-    };
-    x.onkeydown=e=>{
-      if(ownTurn&&x.dataset.playable==="1"&&(e.key==="Enter"||e.key===" ")&&!pendingPlayFx){
-        e.preventDefault();primeAudio();
-        const rank=x.dataset.c;
-        if(!animatePlayedCard(x,rank))return;
-        setTimeout(()=>{
-          if(!pendingPlayFx||pendingPlayFx.rank!==rank)return;
-          pendingPlayFx=null;
-          $("hand").classList.remove("locked");
-          demoMode?advanceDemo():socket.emit("play_card",rank);
-        },575);
-      }
-    };
-  });
-
-  if(collecting&&!pendingTakeFx)animateCollection(previous.sequence,winner);
-  $("sequence").innerHTML=collecting?renderSequence(previous.sequence):renderSequence(s.sequence);
-  $("sequence").classList.toggle("collecting-base",collecting);$("sequence").classList.toggle("collection-hold",collecting);
-  updateTurnRibbon(s,ownTurn,collecting);
-  if(!collecting&&previous&&s.sequence.length>previous.sequence.length&&previous.turn===1-s.player){
-    const justPlayed=s.sequence[s.sequence.length-1];
-    requestAnimationFrame(()=>animateOpponentReveal(justPlayed,s.sequence.length-1,s.sequence,$("sequence").querySelector(".seq:last-child")));
-  }
-  if(previous&&s.hand.length>previous.hand.length)requestAnimationFrame(()=>animateDrawToHand(previous.hand,s.hand));
-  if(previous&&s.hand.length===previous.hand.length)requestAnimationFrame(()=>animateHandReflow(previousHandRects));
-  if(previous&&s.opponentCount>previous.opponentCount)requestAnimationFrame(()=>animateOpponentDraw(previous.opponentCount,s.opponentCount));
-  if(collecting){
-    $("status").textContent=winner===s.player?"Tu iei cărțile.":winner===null?"Cărțile se strâng.":"Adversarul ia cărțile.";
-    $("statusSub").textContent="Vezi secvența înainte să dispară.";
-    clearTimeout(collectionTimer);
-    collectionTimer=setTimeout(()=>{if(collectionToken===token){$("sequence").innerHTML=renderSequence(s.sequence);$("sequence").classList.remove("collecting-base","collection-hold");$("statusSub").textContent=""}},COLLECTION_HOLD_MS);
-  }
-
-  const nextStatus=collecting?$("status").textContent:s.status==="waiting"?"Așteaptă adversarul.":s.status==="playing"?(!s.players?.[0]||!s.players?.[1]?"Adversarul se reconectează…":(ownTurn?"Este rândul tău.":"Rândul adversarului.")):s.roundResult?.draw?"Egalitate — joc dublu.":s.status==="game_finished"?"Partida s-a terminat.":"Runda s-a terminat.";
-  if($("status").textContent!==nextStatus){$("status").classList.remove("status-pop");void $("status").offsetWidth;$("status").classList.add("status-pop")}
-  $("status").textContent=nextStatus;
-  if(!collecting)$("statusSub").textContent=ownTurn?($("take").disabled?"Alege o carte.":"Alege o carte sau apasă IA-LE."): "";
-  $("oppTurn").classList.toggle("active",s.status==="playing"&&s.turn===1-s.player);
-  $("selfPlayerCard").classList.toggle("active",ownTurn);$("selfTurnDot").classList.toggle("active",ownTurn);
-  $("oppPlayerCard").classList.toggle("active",s.status==="playing"&&s.turn===1-s.player);
-  $("pileAVisualCount").textContent=s.pileCounts[0];$("pileBVisualCount").textContent=s.pileCounts[1];
-  if(aDelta)popValue("pileAVisualCount");
-  if(bDelta)popValue("pileBVisualCount");
-  $("pileAVisualPoints").textContent=s.pilePoints[0]+"p";$("pileBVisualPoints").textContent=s.pilePoints[1]+"p";
-  $("pileAVisual").classList.toggle("turn-pulse",s.status==="playing"&&s.turn===0);$("pileBVisual").classList.toggle("turn-pulse",s.status==="playing"&&s.turn===1);
-  if(collecting){const target=winner===0?$("pileAVisual"):winner===1?$("pileBVisual"):null;if(target){target.classList.remove("collect-hit");void target.offsetWidth;target.classList.add("collect-hit");setTimeout(()=>target.classList.remove("collect-hit"),600)}}
-  $("game").classList.toggle("game-turn",ownTurn);
-  $("take").disabled=!(ownTurn&&s.sequence.length>=2);
-  const showNext=["round_finished","round_draw","game_finished"].includes(s.status);
-  $("next").classList.toggle("hidden",!showNext);$("next").disabled=s.player!==0;
+  $("opp").innerHTML=Array.from({length:s.opponentCount},()=>'<div class="card"><img class="back-card-art" src="/cards/card-back.svg" alt="" draggable="false"></div>').join("");
+  $("hand").innerHTML=s.hand.map((card,i)=>{const ok=playable(s,card);return cardMarkup(card,i,s.hand).replace('class="card active-card"','class="card '+(ok?"active-card":"disabled")+'"').replace(' data-card="'+String(card).replaceAll('"','&quot;')+'"',' data-card="'+String(card).replaceAll('"','&quot;')+'" data-playable="'+(ok?"1":"0")+'"')}).join("");
+  $("sequence").innerHTML=s.sequence.length?s.sequence.map((card,i)=>cardMarkup(card,i,s.sequence).replace('class="card active-card"','class="seq"')).join(""):'<span class="empty">Nicio secvență activă</span>';
+  const waiting=s.status==="waiting";
+  const connectedBoth=Boolean(s.players&&s.players[0]&&s.players[1]);
+  const own=s.status==="playing"&&connectedBoth&&s.turn===s.player;
+  $("status").textContent=waiting?(connectedBoth?"Pornim partida…":"Așteaptă adversarul."):(s.status==="playing"?(own?"Este rândul tău.":"Rândul adversarului."):(s.roundResult?.draw?"Egalitate — joc dublu.":s.status==="game_finished"?"Partida s-a terminat.":"Runda s-a încheiat."));
+  $("statusSub").textContent=own?"Alege o carte sau apasă IA-LE.":"";
+  $("turnRibbonText").textContent=waiting?"Așteaptă adversarul":own?"Rândul tău":s.status==="playing"?"Rândul adversarului":"Runda s-a încheiat";
+  $("turnRibbon").classList.toggle("active",own);
+  $("oppTurn").classList.toggle("active",s.status==="playing"&&connectedBoth&&s.turn===1-s.player);
+  $("selfPlayerCard").classList.toggle("active",own);
+  $("selfTurnDot").classList.toggle("active",own);
+  $("oppPlayerCard").classList.toggle("active",s.status==="playing"&&connectedBoth&&s.turn===1-s.player);
+  $("pileAVisualCount").textContent=s.pileCounts[0]; $("pileBVisualCount").textContent=s.pileCounts[1];
+  $("pileAVisualPoints").textContent=s.pilePoints[0]+"p"; $("pileBVisualPoints").textContent=s.pilePoints[1]+"p";
+  $("take").disabled=!(own&&s.sequence.length>=2);
+  const finished=["round_finished","round_draw","game_finished"].includes(s.status);
+  $("next").classList.toggle("hidden",!finished); $("next").disabled=s.player!==0;
   $("log").textContent=s.log.join("\n");
-  if(collecting){
-    $("resultOverlay").classList.add("hidden");
-    setTimeout(()=>{if(collectionToken===token)renderResult(s)},COLLECTION_HOLD_MS);
-  }else{
-    renderResult(s);
-  }
+  [...$("hand").children].forEach(el=>el.onclick=()=>{if(el.dataset.playable==="1")sendAction("play_card",el.dataset.card)});
 }
 
-$("demoLaunch").onclick=()=>{location.search="?demo=1"};
-$("demoStep").onclick=()=>{advanceDemo()};
-if(demoMode){setTimeout(()=>{renderDemo();},0);}
-$("create").onclick=()=>socket.emit("create_room");$("qaLaunch").onclick=()=>{window.location.href="/qa.html"};
-$("join").onclick=joinRoom;$("joinSecondary").onclick=joinRoom;
-$("roomCode").addEventListener("keydown",e=>{if(e.key==="Enter")joinRoom()});
-$("copyRoom").onclick=async()=>{const code=$("code").textContent;try{await navigator.clipboard.writeText(code);$("copyRoom").textContent="copiat";setTimeout(()=>$("copyRoom").textContent="copiază",1200)}catch{$("copyRoom").textContent="selectează";setTimeout(()=>$("copyRoom").textContent="copiază",1200)}};$("shareRoom").onclick=async()=>{primeAudio();const code=$("code").textContent;const share={title:"Șeptică Multiplayer",text:"Intră la masa mea de Șeptică. Cod: "+code,url:window.location.href};try{if(navigator.share){await navigator.share(share);toast("Invitația este gata","gold")}else{await navigator.clipboard.writeText(share.text+" "+share.url);toast("Invitația a fost copiată","gold")}}catch(e){if(e&&e.name!=="AbortError")toast("Nu am putut distribui invitația")}};
-$("resultClose").onclick=()=>$("resultOverlay").classList.add("hidden");
-$("resultNext").onclick=()=>socket.emit("next_round");
-$("take").onclick=()=>{
-  primeAudio();
-  if(demoMode){sound("take");advanceDemo();return}
-  if(!$("sequence").querySelector(".seq"))return;
-  sound("take");
-  pendingTakeFx=true;
-  animateCollection([...$("sequence").querySelectorAll(".seq")],1-me);
-  setTimeout(()=>{pendingTakeFx=false},2300);
-  socket.emit("take");
-};$("next").onclick=()=>{primeAudio();if(demoMode){advanceDemo();return}socket.emit("next_round")};
-socket.on("connect",()=>{setConnection("",false);lobbyReady();const saved=sessionStorage.getItem("septica-room");if(!demoMode&&saved){try{const d=JSON.parse(saved);if(d?.code&&(d.player===0||d.player===1)){socket.emit("reconnect_room",d);return}}catch{sessionStorage.removeItem("septica-room")}}if(qaMode==="host"&&!qaJoinSent)setTimeout(()=>socket.emit("create_room"),120)});
-socket.on("disconnect",()=>{
-  setConnection("Conexiunea a fost pierdută. Reîncercăm…",true);
-  if(pendingPlayFx){pendingPlayFx=null;$("hand").classList.remove("locked")}
-  if(document.body.contains($("status"))) $("status").textContent="Reconectare la server…"
-});
-socket.on("connect_error",()=>setConnection("Nu ne putem conecta la server.",true));
-window.addEventListener("offline",()=>setConnection("Ești offline. Verificăm conexiunea…",true));
-window.addEventListener("online",()=>{if(socket.connected)setConnection("",false);else setConnection("Conexiunea revine…",true)});
-socket.on("room_created",d=>{me=d.player;sessionStorage.setItem("septica-room",JSON.stringify({code:d.code,player:me}));show();$("code").textContent=d.code;$("me").textContent="A";$("lobbyState").textContent=qaMode==="host"?"QA host · cod transmis automat":"Așteaptă adversarul…";if(qaMode==="host"&&qaChannel)qaChannel.postMessage({type:"septica-qa-room",code:d.code})});
-socket.on("room_joined",d=>{me=d.player;sessionStorage.setItem("septica-room",JSON.stringify({code:d.code,player:me}));show();$("code").textContent=d.code;$("me").textContent="B";$("lobbyState").textContent="Ai intrat la masă."});
-socket.on("room_rejoined",d=>{me=d.player;sessionStorage.setItem("septica-room",JSON.stringify({code:d.code,player:me}));show();$("code").textContent=d.code;$("me").textContent=me?"B":"A";$("lobbyState").textContent="Reconectat la masă."});
-socket.on("error_message",m=>{
-  $("message").textContent=m;
-  if(pendingPlayFx){
-    pendingPlayFx=null;
-    $("hand").classList.remove("locked");
-    const source=$("hand").querySelector(".play-source");if(source)source.classList.remove("play-source");
-  }
-});
-socket.on("opponent_disconnected",()=>{if(document.body.contains($("status"))) $("status").textContent="Adversarul s-a deconectat. Așteaptă reconectarea."});
-socket.on("state",s=>{if(!demoMode)renderState(s)});
+async function poll(){
+  const d=roomData();
+  if(!d||pollTimer===null)return;
+  try{
+    const data=await api("/api/rooms/"+encodeURIComponent(d.code)+"/state?player="+d.player);
+    setConnection(false); renderState(data.state);
+  }catch(e){ setConnection(true); }
+}
+function setConnection(bad){ $("connection").textContent=bad?"Conexiunea cu serverul a fost pierdută.":""; $("connection").classList.toggle("hidden",!bad); }
+function startPolling(){ clearInterval(pollTimer); pollTimer=setInterval(poll,300); poll(); }
 
-</script>
+async function createRoom(){
+  try{
+    const data=await api("/api/rooms",{method:"POST",body:"{}"});
+    me=data.player;saveRoom(data.code,me);$("lobbyState").textContent=qaMode==="host"?"QA host · cod transmis automat":"Așteaptă adversarul…";
+    show();renderState(data.state);startPolling();
+    if(qaMode==="host"){if(!qaChannel)qaChannel=new BroadcastChannel("septica-qa-http-v1");qaChannel.postMessage({type:"room",code:data.code})}
+  }catch(e){setMessage(e.message)}
+}
+async function joinRoomCode(code){
+  const room=String(code||"").toUpperCase().trim();if(!room)return;
+  try{
+    const data=await api("/api/rooms/"+encodeURIComponent(room)+"/join",{method:"POST",body:"{}"});
+    me=data.player;saveRoom(data.code,me);$("lobbyState").textContent="Ai intrat la masă.";show();renderState(data.state);startPolling();
+  }catch(e){setMessage(e.message)}
+}
+function joinRoom(){joinRoomCode($("roomCode").value)}
+
+async function sendAction(action,card){
+  const d=roomData();if(!d)return;
+  try{
+    const data=await api("/api/rooms/"+encodeURIComponent(d.code)+"/action",{method:"POST",body:JSON.stringify({player:me,action,card})});
+    renderState(data.state);
+  }catch(e){setMessage(e.message)}
+}
+
+$("create").onclick=createRoom;
+$("qaLaunch").onclick=()=>location.href="/qa.html";
+$("join").onclick=joinRoom; $("joinSecondary").onclick=joinRoom;
+$("roomCode").addEventListener("keydown",e=>{if(e.key==="Enter")joinRoom()});
+$("resultClose").onclick=()=>$("resultOverlay").classList.add("hidden");
+$("resultNext").onclick=()=>sendAction("next_round");
+$("take").onclick=()=>sendAction("take");
+$("next").onclick=()=>sendAction("next_round");
+
+if(qaMode){
+  qaChannel=new BroadcastChannel("septica-qa-http-v1");
+  qaChannel.onmessage=e=>{if(qaMode==="guest"&&e.data?.type==="room")joinRoomCode(e.data.code)};
+}
+
+(async function boot(){
+  if(demoMode){
+    $("lobbyState").textContent="Mod demo";
+    return;
+  }
+  const saved=roomData();
+  if(saved&&saved.code&&(saved.player===0||saved.player===1)){
+    try{const data=await api("/api/rooms/"+encodeURIComponent(saved.code)+"/reconnect",{method:"POST",body:JSON.stringify({player:saved.player})});me=data.player;show();renderState(data.state);startPolling();return}catch{sessionStorage.removeItem("septica-room")}
+  }
+  $("lobbyState").textContent="Server HTTP activ. Alege o opțiune.";
+  if(qaMode==="host")createRoom();
+})();
+console.info("[Șeptică]",BUILD);</script>
 </body></html>
