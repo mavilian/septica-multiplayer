@@ -1,189 +1,103 @@
-const path=require("path"),express=require("express"),http=require("http"),{Server}=require("socket.io"),game=require("./src/game");
-const app=express(),server=http.createServer(app),io=new Server(server),rooms=new Map();
+const path=require("path");
+const express=require("express");
+const game=require("./src/game");
+
+const app=express();
+const rooms=new Map();
+
 app.disable("x-powered-by");
-app.use((req,res,next)=>{
-  if(req.path==="/"||req.path.endsWith(".html")){
-    res.set("Cache-Control","no-store, no-cache, must-revalidate, proxy-revalidate");
-  }
-  next();
-});
+app.use(express.json({limit:"32kb"}));
 app.use(express.static(path.join(__dirname,"public"),{etag:false,maxAge:0}));
-function code(){const c="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let x;do{x=Array.from({length:5},()=>c[Math.floor(Math.random()*c.length)]).join("")}while(rooms.has(x));return x}
-function room(s){return s.data.room?rooms.get(s.data.room):null}
-function pub(r,p,lastAction=r.state.lastAction){
-  const s=r.state;
 
-  return {
-    room:r.code,
-    player:p,
-    players:r.players.map(Boolean),
-
-    status:s.status,
-    round:s.round,
-    game:s.game,
-
-    small:[...s.small],
-    big:[...s.big],
-
-    roundDouble:s.roundDouble,
-    roundResult:s.roundResult,
-    gameResult:s.gameResult,
-
-    deck:s.deck.length,
-
-    hand:[...s.hands[p]],
-    opponentCount:s.hands[1-p].length,
-
-    sequence:[...s.sequence],
-    starter:s.starter,
-    lastAction,
-    turn:s.turn,
-
-    pileCounts:[
-      s.piles[0].length,
-      s.piles[1].length
-    ],
-
-    pilePoints:[
-      game.points(s.piles[0]),
-      game.points(s.piles[1])
-    ],
-
-    log:r.log.slice(-100)
-  };
+function makeCode(){
+  const chars="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let c;
+  do c=Array.from({length:5},()=>chars[Math.floor(Math.random()*chars.length)]).join("");
+  while(rooms.has(c));
+  return c;
 }
-function log(r,t){r.log.push(t);if(r.log.length>120)r.log.shift()}
+
+function publicState(r,p){
+  const s=r.state;
+  return {room:r.code,player:p,players:r.players.map(Boolean),status:s.status,round:s.round,game:s.game,small:[...s.small],big:[...s.big],roundDouble:s.roundDouble,roundResult:s.roundResult,gameResult:s.gameResult,deck:s.deck.length,hand:[...s.hands[p]],opponentCount:s.hands[1-p].length,sequence:[...s.sequence],starter:s.starter,lastAction:s.lastAction,turn:s.turn,pileCounts:[s.piles[0].length,s.piles[1].length],pilePoints:[game.points(s.piles[0]),game.points(s.piles[1])],log:r.log.slice(-100)};
+}
+
+function addLog(r,t){r.log.push(t);if(r.log.length>120)r.log.shift()}
 function ensureStarted(r){
   if(r.players[0]&&r.players[1]&&r.state.status==="waiting"){
     game.startRound(r.state);
-    log(r,`========== RUNDA ${r.state.round} ==========`);
-    log(r,"A: 4 cărți | B: 4 cărți | Pachet: 24");
-    log(r,r.state.turn===0?"A începe runda.":"B începe runda.");
-    traceState(r,"START MECI");
+    addLog(r,"========== RUNDA "+r.state.round+" ==========");
+    addLog(r,"A: 4 cărți | B: 4 cărți | Pachet: 24");
+    addLog(r,r.state.turn===0?"A începe runda.":"B începe runda.");
   }
 }
-function traceState(r,label){
-  const s=r.state;
-  const hand=(p)=>`${s.hands[p].join(" ")} | 7=${s.hands[p].filter(c=>c==="7").length}`;
-  console.log(`[${label}] Partidă: A ${s.big[0]} – ${s.big[1]} B | Runda: A ${s.small[0]} – ${s.small[1]} B | joc=${s.game} runda=${s.round} status=${s.status}`);
-  console.log(`[${label}] Mâini A(${s.hands[0].length}): ${hand(0)} || B(${s.hands[1].length}): ${hand(1)}`);
-  console.log(`[${label}] Pachet=${s.deck.length} | Grămezi A=${s.piles[0].length} (${game.points(s.piles[0])}p) B=${s.piles[1].length} (${game.points(s.piles[1])}p) | turn=${s.turn===null?"-":s.turn?"B":"A"} starter=${s.starter===null?"-":s.starter?"B":"A"}`);
-  console.log(`[${label}] Septică=${s.septica===null?"nu":s.septica?"B":"A"} | ultimul câștigător=${s.lastSequenceWinner===null?"-":s.lastSequenceWinner?"B":"A"} | roundResult=${JSON.stringify(s.roundResult)}`);
+function getRoom(req,res){
+  const code=String(req.params.code||"").trim().toUpperCase();
+  const r=rooms.get(code);
+  if(!r){res.status(404).json({error:"Camera nu există."});return null;}
+  ensureStarted(r);return r;
 }
-function broadcast(r,lastAction){
-  ensureStarted(r);
-  r.players.forEach((id,p)=>id&&io.to(id).emit("state",pub(r,p,lastAction)));
-}
-function ready(r){ensureStarted(r);}
-io.on("connection",s=>{
-s.on("create_room",()=>{if(s.data.room)return;const c=code(),r={code:c,players:[s.id,null],state:game.newState(),log:[]};rooms.set(c,r);s.data.room=c;s.data.player=0;s.emit("room_created",{code:c,player:0});s.emit("state",pub(r,0));broadcast(r)});
-s.on("join_room",raw=>{if(s.data.room)return;const c=String(raw||"").trim().toUpperCase(),r=rooms.get(c);if(!r)return s.emit("error_message","Camera nu există.");if(r.players[1])return s.emit("error_message","Camera este plină.");r.players[1]=s.id;s.data.room=c;s.data.player=1;s.emit("room_joined",{code:c,player:1});ready(r);broadcast(r)});
-s.on("play_card",card=>{const r=room(s);if(!r)return;try{const p=s.data.player,res=game.playCard(r.state,p,String(card)),who=p?"B":"A";if(res.kind==="start")log(r,`${who} începe secvența cu ${res.card}.`);else if(res.kind==="continue")log(r,`${who} răspunde cu ${res.card} — continuă secvența.`);else{log(r,`${who} răspunde cu ${res.card} — cedează prin carte.`);log(r,`${res.winner?"B":"A"} câștigă secvența.`)}if(r.state.status!=="playing"){const q=r.state.roundResult;if(q.draw)log(r,`===== FINAL RUNDA ${r.state.round} ===== Egalitate ${q.points[0]}–${q.points[1]}. Joc dublu.`);else log(r,`===== FINAL RUNDA ${r.state.round} ===== Puncte: A ${q.points[0]} – B ${q.points[1]}. ${q.winner?"B":"A"} câștigă runda.`)}traceState(r,"DUPĂ CARTE");broadcast(r)}catch(e){s.emit("error_message",e.message)}});
-s.on("take",()=>{
-  const r=room(s);
-  if(!r)return;
 
+app.get("/api/health",(req,res)=>res.json({ok:true,transport:"http-polling",rooms:rooms.size}));
+app.post("/api/rooms",(req,res)=>{
+  const code=makeCode();
+  const r={code,players:[true,false],state:game.newState(),log:[]};
+  rooms.set(code,r);
+  res.json({ok:true,code,player:0,state:publicState(r,0)});
+});
+app.post("/api/rooms/:code/join",(req,res)=>{
+  const r=getRoom(req,res);if(!r)return;
+  if(r.players[1])return res.status(409).json({error:"Camera este plină."});
+  r.players[1]=true;ensureStarted(r);
+  res.json({ok:true,code:r.code,player:1,state:publicState(r,1)});
+});
+app.post("/api/rooms/:code/reconnect",(req,res)=>{
+  const r=getRoom(req,res);if(!r)return;
+  const p=Number(req.body&&req.body.player);
+  if(p!==0&&p!==1)return res.status(400).json({error:"Jucător invalid."});
+  r.players[p]=true;ensureStarted(r);
+  res.json({ok:true,code:r.code,player:p,state:publicState(r,p)});
+});
+app.get("/api/rooms/:code/state",(req,res)=>{
+  const r=getRoom(req,res);if(!r)return;
+  const p=Number(req.query.player);
+  if((p!==0&&p!==1)||!r.players[p])return res.status(400).json({error:"Jucător invalid."});
+  res.json({ok:true,state:publicState(r,p)});
+});
+app.post("/api/rooms/:code/action",(req,res)=>{
+  const r=getRoom(req,res);if(!r)return;
+  const p=Number(req.body&&req.body.player);
+  const action=String((req.body&&req.body.action)||"");
+  if(p!==0&&p!==1)return res.status(400).json({error:"Jucător invalid."});
+  if(!r.players[p])return res.status(409).json({error:"Jucătorul nu este în cameră."});
   try{
-    const p=s.data.player;
-    const who=p?"B":"A";
-
-    const taker=p;
-    const cutter=1-p;
-
-    const sequenceBefore=[...r.state.sequence];
-    const pileBefore=[
-      r.state.piles[0].length,
-      r.state.piles[1].length
-    ];
-    const handBefore=[
-      r.state.hands[0].length,
-      r.state.hands[1].length
-    ];
-    const deckBefore=r.state.deck.length;
-
-    console.log("");
-    console.log("========================================");
-    console.log("MULTIPLAYER TAKE TRACE");
-    console.log("========================================");
-    console.log("Jucator TAKE:",who);
-    console.log("TAIATUL:",taker?"B":"A");
-    console.log("TAIETORUL:",cutter?"B":"A");
-    console.log("Secventa:",sequenceBefore.join(" -> "));
-    console.log("Maini inainte: A="+handBefore[0]+" | B="+handBefore[1]);
-    console.log("Gramezi inainte: A="+pileBefore[0]+" | B="+pileBefore[1]);
-    console.log("Pachet inainte:",deckBefore);
-    traceState(r,"ÎNAINTE TAKE");
-
-    const res=game.take(r.state,p);
-
-    const pileAfter=[
-      r.state.piles[0].length,
-      r.state.piles[1].length
-    ];
-    const handAfter=[
-      r.state.hands[0].length,
-      r.state.hands[1].length
-    ];
-    const deckAfter=r.state.deck.length;
-
-    console.log("");
-    console.log("RESULTAT ENGINE");
-    console.log("Winner:",res.winner?"B":"A");
-    console.log("Secventa castigata:",res.sequence.join(" -> "));
-    console.log("Maini dupa: A="+handAfter[0]+" | B="+handAfter[1]);
-    console.log("Gramezi dupa: A="+pileAfter[0]+" | B="+pileAfter[1]);
-    console.log("Pachet dupa:",deckAfter);
-    traceState(r,"DUPĂ TAKE");
-    console.log("========================================");
-    console.log("");
-
-    log(r,`${who} spune: „Ia-le”.`);
-    log(r,`${res.winner?"B":"A"} câștigă secvența: ${res.sequence.join(" → ")}`);
-
-    if(r.state.status!=="playing"){
-      const q=r.state.roundResult;
-
-      if(q.draw)
-        log(r,`===== FINAL RUNDA ${r.state.round} ===== Egalitate ${q.points[0]}–${q.points[1]}. Joc dublu.`);
-      else
-        log(r,`===== FINAL RUNDA ${r.state.round} ===== Puncte: A ${q.points[0]} – B ${q.points[1]}. ${q.winner?"B":"A"} câștigă runda.`);
-    }
-
-    broadcast(r);
-
-  }catch(e){
-    console.error("TAKE ERROR:",e);
-    s.emit("error_message",e.message);
-  }
+    if(action==="play_card"){
+      const card=String((req.body&&req.body.card)||"");
+      const result=game.playCard(r.state,p,card);
+      const who=p?"B":"A";
+      if(result.kind==="start")addLog(r,who+" începe secvența cu "+result.card+".");
+      else if(result.kind==="continue")addLog(r,who+" răspunde cu "+result.card+" — continuă secvența.");
+      else{addLog(r,who+" răspunde cu "+result.card+" — cedează prin carte.");addLog(r,(result.winner?"B":"A")+" câștigă secvența.");}
+    }else if(action==="take"){
+      const result=game.take(r.state,p);
+      addLog(r,(p?"B":"A")+" spune: „Ia-le”.");
+      addLog(r,(result.winner?"B":"A")+" câștigă secvența: "+result.sequence.join(" → "));
+    }else if(action==="next_round"){
+      if(p!==0)throw Error("NOT_ALLOWED");
+      game.nextRound(r.state);
+      addLog(r,"========== RUNDA "+r.state.round+" ==========");
+      addLog(r,"A: 4 cărți | B: 4 cărți | Pachet: 24");
+      addLog(r,r.state.turn===0?"A începe runda.":"B începe runda.");
+    }else throw Error("UNKNOWN_ACTION");
+    ensureStarted(r);
+    res.json({ok:true,state:publicState(r,p)});
+  }catch(e){res.status(400).json({error:e.message||"Acțiune invalidă."});}
 });
-s.on("next_round",()=>{const r=room(s);if(!r||s.data.player!==0)return;try{game.nextRound(r.state);log(r,`========== RUNDA ${r.state.round} ==========`);log(r,"A: 4 cărți | B: 4 cărți | Pachet: 24");log(r,r.state.turn===0?"A începe runda.":"B începe runda.");traceState(r,"DUPĂ RUNDA NOUĂ");broadcast(r)}catch(e){s.emit("error_message",e.message)}});
-s.on("reconnect_room",raw=>{
-  if(s.data.room)return;
-  const c=String(raw?.code||"").trim().toUpperCase();
-  const p=Number(raw?.player);
-  const r=rooms.get(c);
-  if(!r||!(p===0||p===1))return s.emit("error_message","Camera nu mai este disponibilă.");
-  if(r.players[p]&&r.players[p]!==s.id)return s.emit("error_message","Locul jucătorului este ocupat.");
-  r.players[p]=s.id;
-  s.data.room=c;
-  s.data.player=p;
-  log(r,`${p?"B":"A"} s-a reconectat.`);
-  s.emit("room_rejoined",{code:c,player:p});
-  // If the missing seat is back, resume/start the round instead of
-  // leaving both clients stuck on the waiting state.
-  ready(r);
-  broadcast(r);
+
+app.get("*",(req,res)=>{
+  if(req.path.startsWith("/api/"))return res.status(404).json({error:"API route not found."});
+  res.sendFile(path.join(__dirname,"public","index.html"));
 });
-s.on("disconnect",()=>{
-  const r=room(s);
-  if(!r)return;
-  const p=s.data.player;
-  if(r.players[p]!==s.id)return;
-  r.players[p]=null;
-  log(r,`${p?"B":"A"} s-a deconectat.`);
-  r.players.forEach(id=>id&&io.to(id).emit("opponent_disconnected"));
-  if(!r.players[0]&&!r.players[1])rooms.delete(r.code);
-  else broadcast(r);
-})
-});
-server.listen(process.env.PORT||3000,"0.0.0.0",()=>console.log("Șeptică multiplayer v2 listening on http://0.0.0.0:3000"));
+
+const port=Number(process.env.PORT)||3000;
+app.listen(port,"0.0.0.0",()=>console.log("Șeptică HTTP multiplayer listening on "+port));
