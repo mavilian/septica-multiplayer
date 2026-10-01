@@ -259,7 +259,7 @@ button:disabled{opacity:.34;cursor:default;transform:none!important}
 .card:hover:not(.disabled) .card-art{transform:translateY(-2px);filter:drop-shadow(0 19px 20px rgba(0,0,0,.30)) drop-shadow(0 4px 3px rgba(0,0,0,.16))}
 .card:focus-visible{outline:2px solid var(--gold-hi);outline-offset:5px;border-radius:12px}
 .card.active-card .card-art{filter:drop-shadow(0 15px 17px rgba(0,0,0,.28)) drop-shadow(0 0 9px rgba(240,211,124,.22))}
-.card.disabled{cursor:default;opacity:.70}
+.card.disabled{cursor:default;opacity:.70;pointer-events:none}
 .card.disabled .card-art{filter:grayscale(.10) saturate(.76) brightness(.86) drop-shadow(0 6px 8px rgba(0,0,0,.16))}
 .card.pressing{transform:translateY(2px) scale(.985)!important}
 .card.pressing .card-art{transform:translateY(1px)!important;filter:brightness(.98) drop-shadow(0 5px 7px rgba(0,0,0,.20))!important}
@@ -634,8 +634,8 @@ body{padding:0;min-height:100dvh;background:radial-gradient(ellipse at 50% 35%,r
 </style>
 
 <style id="next-level-interaction-final">
-.card.blocked{pointer-events:auto;cursor:default!important}
-.card.blocked:hover,.card.blocked:focus-visible{filter:grayscale(.30) saturate(.55) brightness(.78)!important;transform:rotate(var(--fan,0deg))!important}
+.card.blocked{pointer-events:none!important;cursor:default!important}
+.card.blocked:hover,.card.blocked:focus-visible{filter:none!important;transform:rotate(var(--fan,0deg))!important}
 .hand.locked{pointer-events:none}
 .play-source{opacity:0!important;pointer-events:none!important}
 .sequence.collecting-base .seq{opacity:.08;filter:brightness(.74)}
@@ -909,7 +909,7 @@ function renderResult(s){
   $("resultNext").classList.toggle("hidden",!canNext);
   $("resultNext").disabled=!canNext;
 }
-let collectionTimer=0,collectionToken=0;
+const COLLECTION_HOLD_MS=3000;let collectionTimer=0,collectionToken=0;
 function cardValue(card){return String(typeof card==="object"&&card?card.rank:card)}
 function sequenceStarter(s){
   if(!s||!s.sequence||!s.sequence.length||!Number.isInteger(s.turn))return null;
@@ -931,6 +931,10 @@ function findSequenceTargetRect(){
   const seq=$("sequence");if(!seq)return null;
   const ghost=document.createElement("div");
   ghost.className="seq";
+  ghost.style.position="absolute";
+  ghost.style.left="50%";
+  ghost.style.top="50%";
+  ghost.style.transform="translate(-50%,-50%)";
   ghost.style.visibility="hidden";
   ghost.style.pointerEvents="none";
   ghost.innerHTML="";
@@ -955,7 +959,7 @@ function animatePlayedCard(cardEl,rank){
     {transform:"translate3d("+(dx*.30)+"px,"+(dy*.18-18)+"px,0) rotate(-5deg) rotateY(-7deg) scale(1.02)",opacity:1,offset:.25},
     {transform:"translate3d("+(dx*.72)+"px,"+(dy*.68-6)+"px,0) rotate(2deg) rotateY(3deg) scale(.91)",opacity:1,offset:.70},
     {transform:"translate3d("+dx+"px,"+dy+"px,0) rotate(-1deg) rotateY(0deg) scale(.86)",opacity:.99}
-  ],{duration:560,easing:"cubic-bezier(.12,.94,.16,1)",fill:"forwards"}).finished.then(()=>{
+  ],{duration:620,easing:"cubic-bezier(.12,.94,.16,1)",fill:"forwards"}).finished.then(()=>{
     makeImpact(t.left+t.width/2,t.top+t.height/2);sound("land");fxRemove(clone,20);
   }).catch(()=>fxRemove(clone));
   return true;
@@ -1108,7 +1112,7 @@ function renderState(s){
   }).join("");
 
   [...$("hand").children].forEach(x=>{
-    x.addEventListener("pointerdown",()=>x.classList.add("pressing"),{passive:true});
+    x.addEventListener("pointerdown",()=>{if(x.dataset.playable==="1")x.classList.add("pressing")},{passive:true});
     x.addEventListener("pointerup",()=>x.classList.remove("pressing"),{passive:true});
     x.addEventListener("pointercancel",()=>x.classList.remove("pressing"),{passive:true});
     x.onclick=()=>{
@@ -1125,7 +1129,7 @@ function renderState(s){
             $("hand").classList.remove("locked");
           }
         },2300);
-      },575);
+      },635);
     };
     x.onkeydown=e=>{
       if(ownTurn&&x.dataset.playable==="1"&&(e.key==="Enter"||e.key===" ")&&!pendingPlayFx){
@@ -1144,7 +1148,7 @@ function renderState(s){
 
   if(collecting&&!pendingTakeFx)animateCollection(previous.sequence,winner);
   $("sequence").innerHTML=collecting?renderSequence(previous.sequence):renderSequence(s.sequence);
-  $("sequence").classList.toggle("collecting-base",collecting);
+  $("sequence").classList.toggle("collecting-base",collecting);$("sequence").classList.toggle("collection-hold",collecting);
   updateTurnRibbon(s,ownTurn,collecting);
   if(!collecting&&previous&&s.sequence.length>previous.sequence.length&&previous.turn===1-s.player){
     const justPlayed=s.sequence[s.sequence.length-1];
@@ -1157,7 +1161,7 @@ function renderState(s){
     $("status").textContent=winner===s.player?"Tu iei cărțile.":winner===null?"Cărțile se strâng.":"Adversarul ia cărțile.";
     $("statusSub").textContent="Vezi secvența înainte să dispară.";
     clearTimeout(collectionTimer);
-    collectionTimer=setTimeout(()=>{if(collectionToken===token){$("sequence").innerHTML=renderSequence(s.sequence);$("sequence").classList.remove("collecting-base","collection-hold");$("statusSub").textContent=""}},2250);
+    collectionTimer=setTimeout(()=>{if(collectionToken===token){$("sequence").innerHTML=renderSequence(s.sequence);$("sequence").classList.remove("collecting-base","collection-hold");$("statusSub").textContent=""}},COLLECTION_HOLD_MS);
   }
 
   const nextStatus=collecting?$("status").textContent:s.status==="waiting"?"Așteaptă adversarul.":s.status==="playing"?(ownTurn?"Este rândul tău.":"Așteaptă adversarul."):s.roundResult?.draw?"Egalitate — joc dublu.":s.status==="game_finished"?"Partida s-a terminat.":"Runda s-a terminat.";
@@ -1180,7 +1184,7 @@ function renderState(s){
   $("log").textContent=s.log.join("\n");
   if(collecting){
     $("resultOverlay").classList.add("hidden");
-    setTimeout(()=>{if(collectionToken===token)renderResult(s)},2250);
+    setTimeout(()=>{if(collectionToken===token)renderResult(s)},COLLECTION_HOLD_MS);
   }else{
     renderResult(s);
   }
