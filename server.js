@@ -157,6 +157,9 @@ s.on("reconnect_room",raw=>{
   s.data.player=p;
   log(r,`${p?"B":"A"} s-a reconectat.`);
   s.emit("room_rejoined",{code:c,player:p});
+  // If the missing seat is back, resume/start the round instead of
+  // leaving both clients stuck on the waiting state.
+  ready(r);
   broadcast(r);
 });
 s.on("disconnect",()=>{
