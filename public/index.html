@@ -632,7 +632,7 @@ body{padding:0;min-height:100dvh;background:radial-gradient(ellipse at 50% 35%,r
 <script src="/socket.io/socket.io.js"></script>
 <script>
 
-const socket=io(),$=id=>document.getElementById(id);let me=0,lastState=null,audioCtx=null;const urlParams=new URLSearchParams(location.search),demoMode=urlParams.get("demo")==="1",qaMode=urlParams.get("qa"),qaChannel=qaMode&&"BroadcastChannel"in window?new BroadcastChannel("septica-qa-v1"):null;let demoStep=0,qaJoinSent=false;
+const socket=io(),$=id=>document.getElementById(id);let me=0,lastState=null,audioCtx=null,pendingTakeFx=false;const urlParams=new URLSearchParams(location.search),demoMode=urlParams.get("demo")==="1",qaMode=urlParams.get("qa"),qaChannel=qaMode&&"BroadcastChannel"in window?new BroadcastChannel("septica-qa-v1"):null;let demoStep=0,qaJoinSent=false;
 function audio(){if(audioCtx)return audioCtx;try{audioCtx=new (window.AudioContext||window.webkitAudioContext)();}catch{return null}return audioCtx}
 function tone(freq,duration=.07,type="sine",gain=.035,offset=0){const ctx=audio();if(!ctx)return;try{const now=ctx.currentTime+offset,o=ctx.createOscillator(),g=ctx.createGain();o.type=type;o.frequency.setValueAtTime(freq,now);g.gain.setValueAtTime(.0001,now);g.gain.exponentialRampToValueAtTime(gain,now+.008);g.gain.exponentialRampToValueAtTime(.0001,now+duration);o.connect(g);g.connect(ctx.destination);o.start(now);o.stop(now+duration+.02)}catch{}}
 function sound(kind){if(kind==="turn"){tone(660,.08,"sine",.03);tone(880,.11,"sine",.025,.07)}else if(kind==="card"){tone(390,.045,"triangle",.022)}else if(kind==="take"){tone(240,.08,"square",.024);tone(180,.10,"square",.018,.07)}else if(kind==="finish"){tone(523,.11,"sine",.03);tone(659,.12,"sine",.026,.09);tone(784,.16,"sine",.022,.19)}}
@@ -756,13 +756,26 @@ function animateOpponentReveal(card,index,items){
   animation.finished.then(()=>{clearTimeout(flipTimer);makeImpact(t.left+t.width/2,t.top+t.height/2);fxRemove(wrap,80)}).catch(()=>{clearTimeout(flipTimer);fxRemove(wrap)});
 }
 function animateCollection(seq,winner){
-  const container=$("sequence"),nodes=[...container.querySelectorAll(".seq")],target=winner===0?$("pileAVisual"):winner===1?$("pileBVisual"):null;if(!target)return;
+  const container=$("sequence"),nodes=[...container.querySelectorAll(".seq")],target=winner===0?$("pileAVisual"):winner===1?$("pileBVisual"):null;if(!target||!nodes.length)return;
   const tr=target.getBoundingClientRect(),tx=tr.left+tr.width/2,ty=tr.top+tr.height/2;
-  const glow=document.createElement("div");glow.className="collection-glow";glow.style.left=tx+"px";glow.style.top=ty+"px";$("fxLayer").appendChild(glow);fxRemove(glow,850);
-  nodes.forEach((node,i)=>{const art=node.querySelector(".card-art");if(!art)return;const r=art.getBoundingClientRect(),clone=art.cloneNode(true);clone.className="fx-collect-card";clone.style.left=r.left+"px";clone.style.top=r.top+"px";clone.style.width=r.width+"px";clone.style.height=r.height+"px";$("fxLayer").appendChild(clone);
-    const dx=tx-(r.left+r.width/2),dy=ty-(r.top+r.height/2),scale=Math.min(.58,Math.max(.46,Math.min(58/r.width,76/r.height)));
-    clone.animate([{transform:"translate3d(0,0,0) rotate(0deg) scale(1)",opacity:1},{transform:"translate3d("+(dx*.55)+"px,"+(dy*.55)+"px,0) rotate("+(i%2?-5:5)+"deg) scale(.82)",opacity:1,offset:.58},{transform:"translate3d("+dx+"px,"+dy+"px,0) rotate("+(i%2?-12:12)+"deg) scale("+scale+")",opacity:.05}],{duration:720,easing:"cubic-bezier(.16,.86,.18,1)",delay:i*70,fill:"forwards"}).finished.then(()=>fxRemove(clone,20)).catch(()=>fxRemove(clone));
+  const glow=document.createElement("div");glow.className="collection-glow";glow.style.left=tx+"px";glow.style.top=ty+"px";$("fxLayer").appendChild(glow);fxRemove(glow,900);
+  nodes.forEach((node,i)=>{
+    const art=node.querySelector(".card-art");if(!art)return;
+    const r=art.getBoundingClientRect(),clone=art.cloneNode(true);clone.className="fx-collect-card";
+    clone.style.left=r.left+"px";clone.style.top=r.top+"px";clone.style.width=r.width+"px";clone.style.height=r.height+"px";$("fxLayer").appendChild(clone);
+    const dx=tx-(r.left+r.width/2),dy=ty-(r.top+r.height/2),scale=Math.min(.50,Math.max(.40,Math.min(50/r.width,68/r.height)));
+    const side=(i%2?-1:1),rot=side*(8+i*2);
+    clone.animate([
+      {transform:"translate3d(0,0,0) rotate(0deg) scale(1)",opacity:1},
+      {transform:"translate3d("+(dx*.28)+"px,"+(dy*.10-10)+"px,0) rotate("+(rot*1.2)+"deg) scale(.94)",opacity:1,offset:.30},
+      {transform:"translate3d("+(dx*.68)+"px,"+(dy*.58)+"px,0) rotate("+rot+"deg) scale(.72)",opacity:1,offset:.70},
+      {transform:"translate3d("+dx+"px,"+dy+"px,0) rotate("+(rot+side*8)+"deg) scale("+scale+")",opacity:.04}
+    ],{duration:760,easing:"cubic-bezier(.14,.86,.18,1)",delay:i*58,fill:"forwards"}).finished.then(()=>fxRemove(clone,30)).catch(()=>fxRemove(clone));
   });
+}
+function animateTakeFromTable(winner){
+  const seq=$("sequence");if(!seq)return;
+  animateCollection([...seq.querySelectorAll(".seq")].map(x=>x),winner);
 }
 function updateScoreLabels(s){
   const you=s.small[s.player],opp=s.small[1-s.player];
@@ -777,7 +790,7 @@ function renderState(s){
   const aDelta=s.pileCounts[0]-((previous&&previous.pileCounts&&previous.pileCounts[0])||0);
   const bDelta=s.pileCounts[1]-((previous&&previous.pileCounts&&previous.pileCounts[1])||0);
   const collecting=Boolean(previous&&previous.sequence&&previous.sequence.length&&!s.sequence.length);
-  const winner= aDelta>0 ? 0 : bDelta>0 ? 1 : (previous&&Number.isInteger(previous.turn)?previous.turn:null);
+  const winner= aDelta>0 ? 0 : bDelta>0 ? 1 : null;
   const token=++collectionToken;
 
   if(previous){
@@ -815,7 +828,7 @@ function renderState(s){
     x.onkeydown=e=>{if(ownTurn&&(e.key==="Enter"||e.key===" ")){e.preventDefault();primeAudio();animatePlayedCard(x);setTimeout(()=>demoMode?advanceDemo():socket.emit("play_card",x.dataset.c),90)}};
   });
 
-  if(collecting)animateCollection(previous.sequence,winner);
+  if(collecting&&!pendingTakeFx)animateCollection(previous.sequence,winner);
   $("sequence").innerHTML=collecting?'<span class="sequence-hint">'+(winner===s.player?"Iei cărțile":"Cărțile se strâng")+"</span>":renderSequence(s.sequence);
   $("sequence").classList.remove("collecting");
   updateTurnRibbon(s,ownTurn,collecting);
@@ -860,7 +873,15 @@ $("roomCode").addEventListener("keydown",e=>{if(e.key==="Enter")joinRoom()});
 $("copyRoom").onclick=async()=>{const code=$("code").textContent;try{await navigator.clipboard.writeText(code);$("copyRoom").textContent="copiat";setTimeout(()=>$("copyRoom").textContent="copiază",1200)}catch{$("copyRoom").textContent="selectează";setTimeout(()=>$("copyRoom").textContent="copiază",1200)}};$("shareRoom").onclick=async()=>{primeAudio();const code=$("code").textContent;const share={title:"Șeptică Multiplayer",text:"Intră la masa mea de Șeptică. Cod: "+code,url:window.location.href};try{if(navigator.share){await navigator.share(share);toast("Invitația este gata","gold")}else{await navigator.clipboard.writeText(share.text+" "+share.url);toast("Invitația a fost copiată","gold")}}catch(e){if(e&&e.name!=="AbortError")toast("Nu am putut distribui invitația")}};
 $("resultClose").onclick=()=>$("resultOverlay").classList.add("hidden");
 $("resultNext").onclick=()=>socket.emit("next_round");
-$("take").onclick=()=>{primeAudio();if(demoMode){sound("take");advanceDemo();return}sound("take");socket.emit("take")};$("next").onclick=()=>{primeAudio();if(demoMode){advanceDemo();return}socket.emit("next_round")};
+$("take").onclick=()=>{
+  primeAudio();
+  if(demoMode){sound("take");advanceDemo();return}
+  sound("take");
+  pendingTakeFx=true;
+  animateCollection([...$("sequence").querySelectorAll(".seq")],1-me);
+  setTimeout(()=>{pendingTakeFx=false},1500);
+  socket.emit("take");
+};$("next").onclick=()=>{primeAudio();if(demoMode){advanceDemo();return}socket.emit("next_round")};
 socket.on("connect",()=>{setConnection("",false);lobbyReady();if(qaMode==="host"&&!qaJoinSent)setTimeout(()=>socket.emit("create_room"),120)});
 socket.on("disconnect",()=>{setConnection("Conexiunea a fost pierdută. Reîncercăm…",true);if(document.body.contains($("status"))) $("status").textContent="Reconectare la server…"});
 socket.on("connect_error",()=>setConnection("Nu ne putem conecta la server.",true));
