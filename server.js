@@ -94,7 +94,7 @@ app.post("/api/rooms/:code/action",(req,res)=>{
   }catch(e){res.status(400).json({error:e.message||"Acțiune invalidă."});}
 });
 
-app.get("*",(req,res)=>{
+app.use((req,res)=>{
   if(req.path.startsWith("/api/"))return res.status(404).json({error:"API route not found."});
   res.sendFile(path.join(__dirname,"public","index.html"));
 });
