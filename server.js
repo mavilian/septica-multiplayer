@@ -53,6 +53,15 @@ function pub(r,p,lastAction=r.state.lastAction){
   };
 }
 function log(r,t){r.log.push(t);if(r.log.length>120)r.log.shift()}
+function ensureStarted(r){
+  if(r.players[0]&&r.players[1]&&r.state.status==="waiting"){
+    game.startRound(r.state);
+    log(r,`========== RUNDA ${r.state.round} ==========`);
+    log(r,"A: 4 cărți | B: 4 cărți | Pachet: 24");
+    log(r,r.state.turn===0?"A începe runda.":"B începe runda.");
+    traceState(r,"START MECI");
+  }
+}
 function traceState(r,label){
   const s=r.state;
   const hand=(p)=>`${s.hands[p].join(" ")} | 7=${s.hands[p].filter(c=>c==="7").length}`;
@@ -61,8 +70,11 @@ function traceState(r,label){
   console.log(`[${label}] Pachet=${s.deck.length} | Grămezi A=${s.piles[0].length} (${game.points(s.piles[0])}p) B=${s.piles[1].length} (${game.points(s.piles[1])}p) | turn=${s.turn===null?"-":s.turn?"B":"A"} starter=${s.starter===null?"-":s.starter?"B":"A"}`);
   console.log(`[${label}] Septică=${s.septica===null?"nu":s.septica?"B":"A"} | ultimul câștigător=${s.lastSequenceWinner===null?"-":s.lastSequenceWinner?"B":"A"} | roundResult=${JSON.stringify(s.roundResult)}`);
 }
-function broadcast(r,lastAction){r.players.forEach((id,p)=>id&&io.to(id).emit("state",pub(r,p,lastAction)))}
-function ready(r){if(r.players[0]&&r.players[1]&&r.state.status==="waiting"){game.startRound(r.state);log(r,`========== RUNDA ${r.state.round} ==========`);log(r,"A: 4 cărți | B: 4 cărți | Pachet: 24");log(r,r.state.turn===0?"A începe runda.":"B începe runda.");broadcast(r)}}
+function broadcast(r,lastAction){
+  ensureStarted(r);
+  r.players.forEach((id,p)=>id&&io.to(id).emit("state",pub(r,p,lastAction)));
+}
+function ready(r){ensureStarted(r);}
 io.on("connection",s=>{
 s.on("create_room",()=>{if(s.data.room)return;const c=code(),r={code:c,players:[s.id,null],state:game.newState(),log:[]};rooms.set(c,r);s.data.room=c;s.data.player=0;s.emit("room_created",{code:c,player:0});s.emit("state",pub(r,0));broadcast(r)});
 s.on("join_room",raw=>{if(s.data.room)return;const c=String(raw||"").trim().toUpperCase(),r=rooms.get(c);if(!r)return s.emit("error_message","Camera nu există.");if(r.players[1])return s.emit("error_message","Camera este plină.");r.players[1]=s.id;s.data.room=c;s.data.player=1;s.emit("room_joined",{code:c,player:1});ready(r);broadcast(r)});
