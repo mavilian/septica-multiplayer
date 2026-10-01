@@ -590,6 +590,21 @@ body{padding:0;min-height:100dvh;background:radial-gradient(ellipse at 50% 35%,r
 @keyframes drawFlash{0%{transform:scale(1)}40%{transform:scale(1.12);color:var(--gold-hi)}100%{transform:scale(1)}}
 .deck-display .deck-copy strong{transition:transform .22s ease,color .22s ease}
 </style>
+
+<style id="next-level-motion">
+.hand-reflow{will-change:transform}
+.opponent-hand .card.draw-in{animation:oppDrawIn .46s cubic-bezier(.16,.9,.2,1) both;animation-delay:calc(var(--card-index,0) * 55ms)}
+@keyframes oppDrawIn{0%{opacity:0;transform:translate3d(18px,-18px,0) rotate(5deg) scale(.78)}65%{opacity:1;transform:translate3d(-2px,3px,0) rotate(-1deg) scale(1.03)}100%{opacity:1;transform:none}}
+.deck-stack.dealing span:nth-child(3){animation:deckPulseHard .42s cubic-bezier(.16,.92,.18,1) both!important}
+@keyframes deckPulseHard{0%{transform:scale(1)}40%{transform:translateY(-6px) scale(1.06) rotate(-1deg)}100%{transform:none}}
+.card-shine{
+  position:fixed;z-index:122;pointer-events:none;width:90px;height:150px;border-radius:12px;
+  background:linear-gradient(105deg,transparent 24%,rgba(255,255,255,.24) 49%,transparent 70%);
+  transform:translate(-50%,-50%) rotate(15deg);opacity:0;
+  animation:cardShine .42s ease both;
+}
+@keyframes cardShine{0%{opacity:0;transform:translate(-65%,-50%) rotate(15deg)}25%{opacity:.8}100%{opacity:0;transform:translate(65%,-50%) rotate(15deg)}}
+</style>
 </head><body>
 <div id="connection" class="connection hidden"></div>
 <div id="fxLayer" class="fx-layer" aria-live="polite"></div>
@@ -833,35 +848,61 @@ function animatePlayedCard(cardEl){
     {transform:"translate3d("+dx+"px,"+dy+"px,0) rotate(1deg) scale("+scale+")",opacity:.98}
   ],{duration:510,easing:"cubic-bezier(.13,.93,.17,1)",fill:"forwards"}).finished.then(()=>{makeImpact(t.left+t.width/2,t.top+t.height/2);sound("land");fxRemove(clone,35)}).catch(()=>fxRemove(clone));
 }
+function pulseDeck(){
+  const deck=document.querySelector(".deck-stack");
+  if(!deck)return;
+  deck.classList.remove("dealing");void deck.offsetWidth;deck.classList.add("dealing");
+  setTimeout(()=>deck.classList.remove("dealing"),520);
+}
+function flashAt(x,y){
+  const n=document.createElement("div");n.className="card-shine";n.style.left=x+"px";n.style.top=y+"px";$("fxLayer").appendChild(n);fxRemove(n,460);
+}
 function animateDrawToHand(previousHand,newHand){
   if(!previousHand||previousHand.length>=newHand.length)return;
-  const deckNode=document.querySelector(".deck-stack span:last-child"),hand=$("hand"),opp=$("opp");
-  if(!deckNode||!hand||!opp)return;
-  const deckRect=deckNode.getBoundingClientRect();
+  const deckNode=document.querySelector(".deck-stack span:last-child"),hand=$("hand");
+  if(!deckNode||!hand)return;
+  const deckRect=deckNode.getBoundingClientRect();pulseDeck();
   const added=[];const counts={};
   previousHand.forEach(c=>{const k=cardValue(c);counts[k]=(counts[k]||0)+1});
-  newHand.forEach((c,i)=>{
-    const k=cardValue(c);counts[k]=(counts[k]||0)-1;
-    if(counts[k]<0)added.push(i);
-  });
+  newHand.forEach((c,i)=>{const k=cardValue(c);counts[k]=(counts[k]||0)-1;if(counts[k]<0)added.push(i)});
   added.forEach((idx,n)=>{
     const target=hand.children[idx];if(!target)return;
     const tr=target.getBoundingClientRect();target.classList.add("draw-target");
     const shell=document.createElement("div");shell.className="card fx-flight-card";shell.style.left=deckRect.left+"px";shell.style.top=deckRect.top+"px";shell.style.width=deckRect.width+"px";shell.style.height=deckRect.height+"px";
     const art=document.createElement("img");art.className="card-art";art.src="/cards/card-back.svg";art.alt="";art.draggable=false;shell.appendChild(art);$("fxLayer").appendChild(shell);
     const dx=tr.left+tr.width/2-(deckRect.left+deckRect.width/2),dy=tr.top+tr.height/2-(deckRect.top+deckRect.height/2);
-    const face=cardAssetPath(newHand[idx],idx,newHand);
-    const flipAt=setTimeout(()=>{art.src=face},235+n*45);
+    const face=cardAssetPath(newHand[idx],idx,newHand),flipAt=setTimeout(()=>{art.src=face;flashAt(tr.left+tr.width*.55,tr.top+tr.height*.46)},245+n*45);
     shell.animate([
       {transform:"translate3d(0,0,0) rotate(0deg) scale(1)",opacity:1},
-      {transform:"translate3d("+(dx*.42)+"px,"+(dy*.22-18)+"px,0) rotate("+(n%2?-4:4)+"deg) scale(.94)",opacity:1,offset:.42},
+      {transform:"translate3d("+(dx*.40)+"px,"+(dy*.22-20)+"px,0) rotate("+(n%2?-5:5)+"deg) scale(.94)",opacity:1,offset:.40},
+      {transform:"translate3d("+(dx*.78)+"px,"+(dy*.72)+"px,0) rotate("+(n%2?2:-2)+"deg) scale(.84)",opacity:1,offset:.76},
       {transform:"translate3d("+dx+"px,"+dy+"px,0) rotate(0deg) scale("+Math.min(.88,tr.width/deckRect.width)+")",opacity:.98}
-    ],{duration:480,easing:"cubic-bezier(.15,.88,.18,1)",delay:n*70,fill:"forwards"}).finished.then(()=>{
-      clearTimeout(flipAt);target.classList.remove("draw-target");target.classList.add("draw-arrival");setTimeout(()=>target.classList.remove("draw-arrival"),260);
-      fxRemove(shell,30);sound("land");
+    ],{duration:510,easing:"cubic-bezier(.12,.92,.16,1)",delay:n*72,fill:"forwards"}).finished.then(()=>{
+      clearTimeout(flipAt);target.classList.remove("draw-target");target.classList.add("draw-arrival");setTimeout(()=>target.classList.remove("draw-arrival"),260);fxRemove(shell,30);sound("land");
     }).catch(()=>{clearTimeout(flipAt);target.classList.remove("draw-target");fxRemove(shell)});
   });
   if(added.length){$("deckVisual").classList.remove("draw-flash");void $("deckVisual").offsetWidth;$("deckVisual").classList.add("draw-flash")}
+}
+function animateHandReflow(previousRects){
+  if(!previousRects||!previousRects.size)return;
+  const hand=$("hand");[...hand.children].forEach(el=>{
+    const key=el.dataset.handKey,old=previousRects.get(key);if(!old)return;
+    const r=el.getBoundingClientRect(),dx=old.left-r.left,dy=old.top-r.top;
+    if(Math.abs(dx)<1&&Math.abs(dy)<1)return;
+    el.classList.add("hand-reflow");
+    el.animate([{transform:"translate3d("+dx+"px,"+dy+"px,0) rotate(var(--fan,0deg))"},{transform:"translate3d(0,0,0) rotate(var(--fan,0deg))"}],{duration:320,easing:"cubic-bezier(.18,.9,.2,1)",fill:"forwards"}).finished.then(()=>el.classList.remove("hand-reflow")).catch(()=>el.classList.remove("hand-reflow"));
+  });
+}
+function animateOpponentDraw(previousCount,newCount){
+  if(previousCount===null||newCount<=previousCount)return;
+  const deckNode=document.querySelector(".deck-stack span:last-child"),opp=$("opp");if(!deckNode||!opp)return;
+  const deckRect=deckNode.getBoundingClientRect(),added=newCount-previousCount;pulseDeck();
+  [...opp.children].slice(-added).forEach((target,n)=>{
+    const tr=target.getBoundingClientRect();target.style.opacity="0";const shell=document.createElement("div");shell.className="card fx-flight-card";shell.style.left=deckRect.left+"px";shell.style.top=deckRect.top+"px";shell.style.width=deckRect.width+"px";shell.style.height=deckRect.height+"px";
+    const art=document.createElement("img");art.className="card-art";art.src="/cards/card-back.svg";art.alt="";art.draggable=false;shell.appendChild(art);$("fxLayer").appendChild(shell);
+    const dx=tr.left+tr.width/2-(deckRect.left+deckRect.width/2),dy=tr.top+tr.height/2-(deckRect.top+deckRect.height/2);
+    shell.animate([{transform:"translate3d(0,0,0) rotate(0deg) scale(1)",opacity:1},{transform:"translate3d("+dx+"px,"+dy+"px,0) rotate("+(n%2?-4:4)+"deg) scale(.58)",opacity:1}],{duration:430,easing:"cubic-bezier(.14,.9,.17,1)",delay:n*60,fill:"forwards"}).finished.then(()=>{target.style.opacity="1";fxRemove(shell,25)}).catch(()=>{target.style.opacity="1";fxRemove(shell)});
+  });
 }
 
 function animateOpponentReveal(card,index,items,targetNode){
@@ -934,14 +975,16 @@ function renderState(s){
   updateScoreLabels(s);
   if(scoreChanged){$("score-card").classList.remove("score-change");void $("score-card").offsetWidth;$("score-card").classList.add("score-change")}
   $("oppCount").textContent=s.opponentCount;
-  $("opp").innerHTML=Array.from({length:s.opponentCount},(_,i)=>'<div class="card deal-in" style="--card-index:'+i+'" aria-hidden="true"><img class="back-card-art" src="/cards/card-back.svg" alt="" draggable="false"></div>').join("");
+  const previousHandRects=new Map(previous&&$("hand")?[...$("hand").children].map(el=>[el.dataset.handKey,el.getBoundingClientRect()]):[]);
+  const opponentIncreased=Boolean(previous&&s.opponentCount>previous.opponentCount);
+  $("opp").innerHTML=Array.from({length:s.opponentCount},(_,i)=>'<div class="card '+((!previous||opponentIncreased)&&i>=Math.max(0,s.opponentCount-(previous?Math.max(0,s.opponentCount-previous.opponentCount):s.opponentCount))?'draw-in':'')+'" style="--card-index:'+i+'" aria-hidden="true"><img class="back-card-art" src="/cards/card-back.svg" alt="" draggable="false"></div>').join("");
 
   $("hand").innerHTML=s.hand.map((c,i)=>{
     const rank=cardValue(c);
     const beforeCount=s.hand.slice(0,i).filter(x=>cardValue(x)===rank).length;
     const previousCount=previous&&previous.hand?previous.hand.filter(x=>cardValue(x)===rank).length:0;
     const fresh=!previous;
-    return '<div class="card '+(ownTurn?"active-card":"disabled")+(fresh?' deal-in':'')+'" style="--card-index:'+i+'" data-c="'+rank+'" role="button" tabindex="'+(ownTurn?"0":"-1")+'" aria-disabled="'+(!ownTurn)+'" aria-label="Joacă cartea '+rank+'">'+cardFaceMarkup(c,i,s.hand)+'</div>';
+    return '<div class="card '+(ownTurn?"active-card":"disabled")+(fresh?' deal-in':'')+'" style="--card-index:'+i+'" data-c="'+rank+'" data-hand-key="'+rank+'-'+beforeCount+'" role="button" tabindex="'+(ownTurn?"0":"-1")+'" aria-disabled="'+(!ownTurn)+'" aria-label="Joacă cartea '+rank+'">'+cardFaceMarkup(c,i,s.hand)+'</div>';
   }).join("");
 
   [...$("hand").children].forEach(x=>{
@@ -961,6 +1004,8 @@ function renderState(s){
     requestAnimationFrame(()=>animateOpponentReveal(justPlayed,s.sequence.length-1,s.sequence,$("sequence").querySelector(".seq:last-child")));
   }
   if(previous&&s.hand.length>previous.hand.length)requestAnimationFrame(()=>animateDrawToHand(previous.hand,s.hand));
+  if(previous&&s.hand.length===previous.hand.length)requestAnimationFrame(()=>animateHandReflow(previousHandRects));
+  if(previous&&s.opponentCount>previous.opponentCount)requestAnimationFrame(()=>animateOpponentDraw(previous.opponentCount,s.opponentCount));
   if(collecting){
     $("status").textContent=winner===s.player?"Tu iei cărțile.":winner===null?"Cărțile se strâng.":"Adversarul ia cărțile.";
     $("statusSub").textContent="Vezi secvența înainte să dispară.";
